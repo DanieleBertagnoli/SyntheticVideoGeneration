@@ -76,7 +76,7 @@ This script will loop over the generated sequences to generat an addition file p
 
 ### 3. Video creation (Optional)
 ```
-python Code/SceneGeneration/visualize_video.py
+python Code/Scripts/visualize_video.py
 ```
 This script is used for putting toghether all the frames of each sequence to create the video.
 
