@@ -1,0 +1,10 @@
+Code/SceneGeneration/tmp
+
+venv/
+
+Blender-2.79b/
+
+Data/BlenderScenes
+Data/GeneratedScenes
+Data/Datasets
+Data/Configs/models_id.yml

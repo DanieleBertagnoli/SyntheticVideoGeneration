@@ -1,0 +1,33 @@
+blender_files: # List of Blender files to be used for scene generation
+    0: '1.blend'  
+    1: '2.blend'
+
+
+num_scenes_to_generate: 2  # Number of scenes to generate
+fps: 24  # Frames per second for animation
+cam_movements_per_scene: [3, 7]  # Range of camera movements per scene (min, max)
+cam_movements_duration_in_seconds: [3, 8]  # Range of duration for camera movements in seconds (min, max)
+
+
+blender_settings:  # Blender settings
+    range_x: [-0.3, 0.3]  # Range of x-axis coordinates for object placement
+    range_y: [-0.3, 0.3]  # Range of y-axis coordinates for object placement
+    range_z: [0.4, 0.9]  # Range of z-axis coordinates for object placement
+    sun_energy: [0.3, 2]  # Range of environmental light intensity
+    sun_color: [[0, 0.05], [0, 0.05], [0, 0.05]]  # Range of environmental light color (R, G, B)
+    max_lamp_num: 3  # Maximum number of lamps to be added to the scene
+    lamp_brightness: [0.1, 1]  # Range of lamp brightness
+    lamp_colors: [[0.5, 1], [0.5, 1], [0.5, 1]]  # Range of lamp colors (R, G, B)
+    lamp_pos_range: [[-1.5, 1.5], [0.5, 1.5], [-1.5, 1.5]]  # Range of lamp positions (X, Y, Z)
+
+
+camera_settings:  # Intrinsic camera parameters
+    height: 480
+    width: 640
+    focalX: 1.066778000000000020e+03
+    focalY: 1.067487000000000080e+03
+    centerX: 3.129868999999999915e+02
+    centerY: 2.413109000000000037e+02
+
+
+bbox_adjustment: 20  # Adjustment value for bounding box (in pixels)
