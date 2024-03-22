@@ -1,5 +1,5 @@
 # SyntheticVideoGeneration
-This project has been inspired by the synthetic frame generation process provided by the [iros20-6d-pose-tracking](https://github.com/wenbowen123/iros20-6d-pose-tracking) project. This repository allows you to generate synthetic videos from your CAD models. The models are dynamically loaded into a Blender scene, and through a keyframe generation process, the camera moves along spherical points smoothly to create the final video. The whole project is designed to work with YCB-Video datasets like.
+This project has been inspired by the synthetic frame generation process provided by the [iros20-6d-pose-tracking](https://github.com/wenbowen123/iros20-6d-pose-tracking) project. This repository allows you to generate synthetic videos from your CAD models. The models are dynamically loaded into a Blender scene, and through a keyframe generation process, the camera moves along spherical points smoothly to create the final video. The whole project is designed to work with YCB-Video datasets like. The project has been tested on both Linux (Ubuntu 22.04) and Windows.
 
 ## Installation
 We recomend the use of Anaconda (or Miniconda) to run the project since we used Python 3.10.
@@ -48,7 +48,11 @@ python Code/Scripts/generate_models_id.py
 ```
 
 ## Run the project
-The project consists in three steps:
+You can run the project by running the script:
+```
+python Code/main.py
+```
+or by running manually the following scripts (NB: Step 3 is not run by `main.py`, therefore if you want the videos you have to run it manually):
 
 ### 1. Generate the video sequences
 ```
@@ -64,7 +68,7 @@ This script will generate a new directory `Data/GeneratedScenes/`. Then for each
     3. `blendercam_in_world`: 4x4 matrix specifying the 6D pose of the camera.
     4. `K`: Matrix specifying the camera intrinsic parameters.
 
-### 2. Generated bounding boxes (Optional)
+### 2. Generate bounding boxes (Optional)
 ```
 python Code/SceneGeneration/generate_bboxes.py
 ```
@@ -75,6 +79,12 @@ This script will loop over the generated sequences to generat an addition file p
 python Code/SceneGeneration/visualize_video.py
 ```
 This script is used for putting toghether all the frames of each sequence to create the video.
+
+### 4. Convert bounding boxes in a YOLO format (Optional)
+```
+python Code/SceneGeneration/yolo_conversion.py
+```
+This scripts converts the `xxxx-box.txt` files in a YOLO like format (therefore all the box will not exceed the image).
 
 ## Why Blender-2.79b?
 We perfectly know that this Blender version is quite outdated, however most of the projects about synthetic data generation use this version. As far as we know, Blender 2.80 has completely changed the Python scripting APIs making them more complicated even for simpler tasks as the one performed by this project.
