@@ -62,7 +62,7 @@ def to_yolo(generated_scenes_path, data, width_img=640, height_img=480):
         with open(os.path.join(generated_scenes_path, box_txt_file), 'r') as f_in, open(os.path.join(generated_scenes_path, yolo_txt_scene), 'w') as f_out:
             for object_line in f_in:
                 portions = object_line.strip().split()
-                object_name, x_min, y_max, x_max, y_min = portions[0], float(portions[1]), float(portions[2]), float(portions[3]), float(portions[4])
+                object_name, x_min, y_min, x_max, y_max = portions[0], float(portions[1]), float(portions[2]), float(portions[3]), float(portions[4])
 
                 if x_min < 0:
                     x_min = 0
@@ -72,6 +72,10 @@ def to_yolo(generated_scenes_path, data, width_img=640, height_img=480):
                     x_max = 0
                 elif x_max > width_img:
                     x_max = width_img
+                if y_max < 0:
+                    y_max = 0
+                elif y_max > height_img:
+                    y_max = height_img
                 if y_min < 0:
                     y_min = 0
                 elif y_min > height_img:
@@ -119,16 +123,17 @@ def organize_yolo_dataset(yolo_dataset_path):
     train_files = scenes_names[:int(len(scenes_names)*0.8)]
     val_files = scenes_names[int(len(scenes_names)*0.8):]
 
-    YOLO_DATASET_PATH_images = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'YoloDataset', 'images')
-    YOLO_DATASET_PATH_labels = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'YoloDataset', 'labels')
+    YOLO_DATASET_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets','YoloDataset')
+    YOLO_DATASET_PATH_images = os.path.join(YOLO_DATASET_PATH, 'images')
+    YOLO_DATASET_PATH_labels = os.path.join(YOLO_DATASET_PATH, 'labels')
 
     check_and_create_folder(YOLO_DATASET_PATH_images)
     check_and_create_folder(YOLO_DATASET_PATH_labels)
 
-    YOLO_DATASET_PATH_images_train = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'YoloDataset', 'images', 'train')
-    YOLO_DATASET_PATH_images_val = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'YoloDataset', 'images', 'val')
-    YOLO_DATASET_PATH_labels_train = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'YoloDataset', 'labels', 'train')
-    YOLO_DATASET_PATH_labels_val = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'YoloDataset', 'labels', 'val')
+    YOLO_DATASET_PATH_images_train = os.path.join(YOLO_DATASET_PATH, 'images', 'train')
+    YOLO_DATASET_PATH_images_val = os.path.join(YOLO_DATASET_PATH, 'images', 'val')
+    YOLO_DATASET_PATH_labels_train = os.path.join(YOLO_DATASET_PATH, 'labels', 'train')
+    YOLO_DATASET_PATH_labels_val = os.path.join(YOLO_DATASET_PATH, 'labels', 'val')
 
     check_and_create_folder(YOLO_DATASET_PATH_images_train)
     check_and_create_folder(YOLO_DATASET_PATH_images_val)
@@ -163,7 +168,7 @@ if __name__ == '__main__':
     GENERATED_SCENES_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'GeneratedScenes')
     GENERATED_VIDEOS_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'GeneratedVideos')
     YML_DATA_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Configs', 'models_id.yml')
-    YOLO_DATASET_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'YoloDataset')
+    YOLO_DATASET_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets','YoloDataset')
 
     if not os.path.exists(YOLO_DATASET_PATH):
         os.makedirs(YOLO_DATASET_PATH)

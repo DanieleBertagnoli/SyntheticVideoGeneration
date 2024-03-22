@@ -84,10 +84,10 @@ This script is used for putting toghether all the frames of each sequence to cre
 ```
 python Code/SceneGeneration/yolo_conversion.py
 ```
-This scripts converts the `xxxx-box.txt` files in a YOLO like format (therefore all the box will not exceed the image).
+This scripts converts the `xxxx-box.txt` files in a YOLO like format (therefore all the box will not exceed the image). This script is part of the project since this repository is also part of a bigger project in which YOLOv8 is used to perform object detection tasks.
 
 ## Why Blender-2.79b?
-We perfectly know that this Blender version is quite outdated, however most of the projects about synthetic data generation use this version. As far as we know, Blender 2.80 has completely changed the Python scripting APIs making them more complicated even for simpler tasks as the one performed by this project.
+We are aware that this Blender version is quite outdated; however, most projects involving synthetic data generation still use this version. As far as we know, starting from Blender 2.80, Python scripting APIs are completely changed, making them more complicated, even for simpler tasks such as the one performed by this project.
 
 ### Why should I download Blender using your script?
 The Blender version we have provided in the installation script is read-to-go for the project. If you legitimatelly don't trust our files, you can freely download Blender-2.79b from the [official website](https://download.blender.org/release/Blender2.79/) and install the pip packages needed to run the project.

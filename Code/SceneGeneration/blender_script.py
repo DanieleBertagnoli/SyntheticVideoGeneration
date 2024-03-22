@@ -452,6 +452,7 @@ def get_dynamic_objects() -> List[bpy.types.Object]:
             and 'Point' not in ob.name
             and 'box_plane' not in ob.name
             and 'Sun' not in ob.name
+            and 'Bezier' not in ob.name
         ):
             # Append the object to the list of dynamic objects
             obs.append(ob)
@@ -535,7 +536,7 @@ def remove_objects(class_ids: list) -> None:
         # Check if the object's class ID is in the list of class IDs to be removed
         if ob.pass_index in class_ids:
             # Print a message indicating the object is being removed
-            print('Removed ', ob.pass_index)
+            print('Removed ', ob.pass_index, ' ', ob.name)
             # Remove the object from the scene
             bpy.data.objects.remove(ob, do_unlink=True)
 
