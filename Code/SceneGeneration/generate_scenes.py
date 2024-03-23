@@ -2,8 +2,9 @@ import os
 import yaml
 import sys
 import shutil
+import argparse
 
-def start_rendering(config_file) -> None:
+def start_rendering(config_file:dict, reset_folder:bool) -> None:
 
     """
     Function to start rendering Blender scenes based on the configuration file.
@@ -16,7 +17,7 @@ def start_rendering(config_file) -> None:
     data_path = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data')
 
     OUTPUT_DIRECTORY = os.path.join(data_path, 'GeneratedScenes')
-    if os.path.exists(OUTPUT_DIRECTORY):
+    if os.path.exists(OUTPUT_DIRECTORY) and reset_folder:
         shutil.rmtree(OUTPUT_DIRECTORY)
 
     for blender_scene_file in config_file['blender_files'].values():
@@ -34,6 +35,10 @@ def start_rendering(config_file) -> None:
 
 if __name__ == '__main__':
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--reset_folder", type=bool, default=False, help="Name of the folder placed in Data/Datasets/ containing the model files")
+    args = parser.parse_args()
+
     # Get Blender executable path from environment variable
     BLENDER_EXECUTABLE_PATH = os.environ.get('BLENDER_PATH')
 
@@ -50,4 +55,4 @@ if __name__ == '__main__':
     print('\n --- Scene generation config loaded --- \n')
 
     # Start rendering based on the configuration file 
-    start_rendering(config_file)
+    start_rendering(config_file, args.reset_folder)

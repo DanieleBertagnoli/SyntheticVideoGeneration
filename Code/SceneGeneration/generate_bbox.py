@@ -37,7 +37,20 @@ def get_model_name_from_id(id) -> str:
 
 
 
-def project_points(points_3d, blendercam_in_world, K, img_width):
+def project_points(points_3d: np.ndarray, blendercam_in_world: np.ndarray, K: np.ndarray, img_width: int) -> List[Tuple[float, float]]:
+    """
+    Projects 3D points onto a 2D image plane.
+
+    Args:
+        points_3d (np.ndarray): Array of 3D points with shape (N, 3).
+        blendercam_in_world (np.ndarray): Transformation matrix from Blender camera coordinates to world coordinates (4x4).
+        K (np.ndarray): Camera intrinsic matrix (3x3).
+        img_width (int): Width of the output image.
+
+    Returns:
+        List[Tuple[float, float]]: List of 2D points (x, y) projected onto the image plane.
+    """
+
     # Convert points to homogeneous coordinates
     points_3d_homogeneous = np.hstack((points_3d, np.ones((len(points_3d), 1))))
 
@@ -194,8 +207,12 @@ if __name__ == '__main__':
     with open(CONFIG_PATH, 'r') as f:
         config_file = yaml.safe_load(f)
 
-    for folder_name in os.listdir(GENERATED_SCENES_PATH):
+    folder_list = os.listdir(GENERATED_SCENES_PATH)
+    folder_list.sort()
+    for folder_name in folder_list:
         folder_name_path = os.path.join(GENERATED_SCENES_PATH, folder_name)
+
+        print(f'\n\n --- Generating bboxes for sequence {folder_name} ---\n\n')
 
         # Iterate through files in the directory
         for file_name in os.listdir(folder_name_path):
