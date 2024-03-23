@@ -44,7 +44,7 @@ In order to use the project with your dataset, you have to arrange the files suc
 3. Create a folder `MyDataset/ObjectModels/` and put here all the CAD model files (only .obj files are accepted, if your files are in a different format you can import them in Blender and export them as .obj)
 4. Run the following command to generate the `models_id.yml` file:
 ```
-python Code/Scripts/generate_models_id.py
+python Code/Scripts/generate_models_id.py --dataset_name=MyDataset
 ```
 
 ## Run the project
