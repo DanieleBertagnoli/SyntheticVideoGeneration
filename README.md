@@ -41,10 +41,11 @@ In order to use the project with your dataset, you have to arrange the files suc
 
 1. Create a folder `Data/Datasets/`.
 2. Inside `Data/Datasets/` create the folder `MyDataset/` (you can call it as you want).
-3. Create a folder `MyDataset/ObjectModels/` and put here all the CAD model files (only .obj files are accepted, if your files are in a different format you can import them in Blender and export them as .obj)
-4. Run the following command to generate the `models_id.yml` file:
+3. Create a folder `MyDataset/Models/` and put here all the CAD model files (only .obj files are accepted, if your files are in a different format you can import them in Blender and export them as .obj)
+4. Set the `dataset_name` in the `scene_generation.yml` file. The value of this variable must be the name of the folder of your dataset (in this example `MyDataset`).
+5. Run the following command to generate the `models_id.yml` file:
 ```
-python Code/Scripts/generate_models_id.py --dataset_name=MyDataset
+python Code/Scripts/generate_models_id.py
 ```
 
 ## Run the project
@@ -52,7 +53,7 @@ You can run the project by running the script:
 ```
 python Code/main.py
 ```
-or by running manually the following scripts (NB: Step 3 is not run by `main.py`, therefore if you want the videos you have to run it manually):
+or by running manually the following scripts (NB: Steps 4 and 5 are not run by `main.py`, therefore if you want the videos or generate the YCB additional files (`points.xyz` and `classes.txt` files) you have to run it manually):
 
 ### 1. Generate the video sequences
 ```
@@ -74,17 +75,23 @@ python Code/SceneGeneration/generate_bboxes.py
 ```
 This script will loop over the generated sequences to generat an addition file per frame called `xxxx-box.txt`. Using the information provieded by the `.npy` files, the ground-truth boxes are computed for each object. The boxes are represented using the upper-right and lower-left corners.
 
-### 3. Video creation (Optional)
+### 3. Convert bounding boxes in a YOLO format (Optional)
+```
+python Code/SceneGeneration/yolo_conversion.py
+```
+This scripts converts the `xxxx-box.txt` files in a YOLO like format (therefore all the box will not exceed the image). This script is part of the project since this repository is also part of a bigger project in which YOLOv8 is used to perform object detection tasks.
+
+### 4. Video creation (Optional)
 ```
 python Code/Scripts/visualize_video.py
 ```
 This script is used for putting toghether all the frames of each sequence to create the video.
 
-### 4. Convert bounding boxes in a YOLO format (Optional)
+### 5. YCB Additional files generation (Optional)
 ```
-python Code/SceneGeneration/yolo_conversion.py
+python Code/Scripts/generate_ycb_addional_files.py
 ```
-This scripts converts the `xxxx-box.txt` files in a YOLO like format (therefore all the box will not exceed the image). This script is part of the project since this repository is also part of a bigger project in which YOLOv8 is used to perform object detection tasks.
+This script is used for generating YCB-like additional files. For each model the script will generate `points.xyz` containing the vertices of the 3D model's mesh.
 
 ## Why Blender-2.79b?
 We are aware that this Blender version is quite outdated; however, most projects involving synthetic data generation still use this version. As far as we know, starting from Blender 2.80, Python scripting APIs are completely changed, making them more complicated, even for simpler tasks such as the one performed by this project.

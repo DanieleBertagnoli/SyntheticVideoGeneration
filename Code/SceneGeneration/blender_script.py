@@ -668,6 +668,8 @@ def generate() -> None:
     with open(CONFIG_FILE_PATH, 'r') as f:
         config_file = yaml.safe_load(f)
 
+    dataset_name = config_file['dataset_name']
+
     MODELS_ID_FILE_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Configs', 'models_id.yml')
     with open(MODELS_ID_FILE_PATH, 'r') as f:
         models_id = yaml.safe_load(f)
@@ -677,7 +679,7 @@ def generate() -> None:
         os.makedirs(OUTPUT_DIRECTORY)
 
     BACKGROUND_FOLDER = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'BackgroundTextures')
-    OBJECT_MODELS_DIR_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets', 'ThalesDataset', 'ObjectModels')
+    OBJECT_MODELS_DIR_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets', dataset_name, 'Models')
 
     num_scenes = config_file['num_scenes_to_generate']
     fps = config_file['fps']
@@ -720,8 +722,15 @@ def generate() -> None:
     print('\n --- Loading models in the scene --- \n')
 
     # Get the abs paths of the object models
-    object_model_files = models_id.keys()
-    object_model_files = [os.path.join(OBJECT_MODELS_DIR_PATH,f) for f in object_model_files]
+    object_models = models_id.keys()
+
+    model_folders = os.listdir(OBJECT_MODELS_DIR_PATH)
+    object_model_files = []
+    for model_folder in model_folders:
+        model_folder = os.path.join(OBJECT_MODELS_DIR_PATH, model_folder)
+        model_name = [f for f in os.listdir(model_folder) if f.endswith('.obj')][0]
+        if model_name in object_models:
+            object_model_files.append(os.path.join(model_folder, model_name))
 
     # List all directories in the given directory
     folders = [folder for folder in os.listdir(OUTPUT_DIRECTORY)]

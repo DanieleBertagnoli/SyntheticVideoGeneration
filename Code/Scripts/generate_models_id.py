@@ -15,16 +15,24 @@ def generate_yaml(dataset_name):
     CURRENT_DIR_PATH = os.path.dirname(__file__)
     yaml_file = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Configs', 'models_id.yml')
 
+    dataset_path = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets', dataset_name)
+    if not os.path.exists(dataset_path):
+        print('\n\n!!! The dataset you specified does not exists !!!\n\n')
+        sys.exit()
+
     # Get a list of all files in the directory
-    model_files_path = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets', dataset_name, 'ObjectModels')
+    model_files_path = os.path.join(dataset_path, 'Models')
     if not os.path.exists(model_files_path):
         print(f"Error: Dataset directory '{model_files_path}' not found.")
         return
     
-    model_files = os.listdir(model_files_path)
+    model_files = []
+    # Iterate though the model folders and select all the .obj files
+    for model_folder in sorted(os.listdir(model_files_path)):
+        model_folder = os.path.join(model_files_path, model_folder)
 
-    # Filter out only PLY and OBJ files
-    model_files = [f for f in model_files if f.endswith((".obj"))]
+        model_name = [f for f in os.listdir(model_folder) if f.endswith((".obj"))][0]
+        model_files.append(model_name)
 
     # Generate the YAML dictionary
     yaml_data = {}
@@ -42,12 +50,14 @@ def generate_yaml(dataset_name):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset_name", type=str, help="Name of the folder placed in Data/Datasets/ containing the model files")
-    args = parser.parse_args()
+    
+    # Define paths
+    CURRENT_DIR_PATH = os.path.dirname(__file__)
+    CONFIG_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Configs', 'scene_generation.yml')
 
-    if not args.dataset_name:
-        print('\n\n!!! You have to specify the dataset name using --dataset_name=DatasetFolder !!!\n\n')
-        sys.exit()
+    with open(CONFIG_PATH, 'r') as f:
+        config_file = yaml.safe_load(f)
 
-    generate_yaml(args.dataset_name)
+    dataset_name = config_file['dataset_name']
+
+    generate_yaml(dataset_name)

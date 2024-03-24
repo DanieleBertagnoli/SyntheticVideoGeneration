@@ -114,7 +114,7 @@ def get_object_dimensions(model_path, pose_in_world, blendercam_in_world, K, img
 
 
 
-def generated_bboxes(blendercam_in_world, pose_in_world, image_path, model_id, K, img_width, bbox_adjustment, show_image=False) -> np.ndarray:
+def generated_bboxes(model_paths, blendercam_in_world, pose_in_world, image_path, model_id, K, img_width, bbox_adjustment, show_image=False) -> np.ndarray:
     """
     Generate bounding boxes on an image for a given object.
 
@@ -130,15 +130,17 @@ def generated_bboxes(blendercam_in_world, pose_in_world, image_path, model_id, K
         numpy.ndarray: Bounding box coordinates.
     """
 
-    # Define paths
-    CURRENT_DIR_PATH = os.path.dirname(__file__)
-    OBJECT_MODELS_DIR_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets', 'ThalesDataset', 'ObjectModels')
-
     # Get the name of the object model
     model_name = get_model_name_from_id(model_id)
 
+    # Get the model abs path
+    for path in model_paths:
+        if model_name in path:
+            model_path = path
+            break
+
     # Get the bbox
-    bbox, points = get_object_dimensions(os.path.join(OBJECT_MODELS_DIR_PATH, model_name), pose_in_world, blendercam_in_world, K, img_width, bbox_adjustment)
+    bbox, points = get_object_dimensions(model_path, pose_in_world, blendercam_in_world, K, img_width, bbox_adjustment)
 
     if show_image:
         # Read the input image
@@ -207,10 +209,24 @@ if __name__ == '__main__':
     with open(CONFIG_PATH, 'r') as f:
         config_file = yaml.safe_load(f)
 
+    dataset_name = config_file['dataset_name']
+
+    OBJECT_MODELS_DIR_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets', dataset_name, 'Models')
+
+    model_folders = os.listdir(OBJECT_MODELS_DIR_PATH)
+    model_paths = []
+    for model_folder in model_folders:
+        model_folder = os.path.join(OBJECT_MODELS_DIR_PATH, model_folder)
+        model_name = [f for f in os.listdir(model_folder) if f.endswith('.obj')][0]
+        model_paths.append(os.path.join(model_folder, model_name))
+
     folder_list = os.listdir(GENERATED_SCENES_PATH)
     folder_list.sort()
     for folder_name in folder_list:
         folder_name_path = os.path.join(GENERATED_SCENES_PATH, folder_name)
+
+        if not os.path.isdir(folder_name_path):
+            continue
 
         print(f'\n\n --- Generating bboxes for sequence {folder_name} ---\n\n')
 
@@ -239,7 +255,8 @@ if __name__ == '__main__':
                 model_name = get_model_name_from_id(class_id)
                 bboxes[model_name] = []
 
-                bbox = generated_bboxes(metadata['blendercam_in_world'],
+                bbox = generated_bboxes(model_paths,
+                                        metadata['blendercam_in_world'],
                                         metadata['poses_in_world'][count_object_id],
                                         os.path.join(folder_name_path, f'{scene_id}-color.png'),
                                         class_id,

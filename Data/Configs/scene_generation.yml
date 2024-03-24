@@ -1,9 +1,12 @@
+dataset_name: 'ThalesDataset'
+
+
 blender_files: # List of Blender files to be used for scene generation
     0: '1.blend'  
     1: '2.blend'
 
 
-num_scenes_to_generate: 10  # Number of scenes to generate
+num_scenes_to_generate: 1  # Number of scenes to generate
 fps: 24  # Frames per second for animation
 cam_movements_per_scene: [4, 7]  # Range of camera movements per scene (min, max)
 cam_movements_duration_in_seconds: [1, 3]  # Range of duration for camera movements in seconds (min, max)
