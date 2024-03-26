@@ -840,9 +840,9 @@ def generate() -> None:
             rgbB, depthB, segB = render(count)
 
             # Save the images
-            rgb_filename = os.path.join(OUTPUT_DIRECTORY, '{:04d}'.format(i), '{:07d}-color.png'.format(count))
-            depth_filename = os.path.join(OUTPUT_DIRECTORY, '{:04d}'.format(i), '{:07d}-depth.png'.format(count))
-            seg_filename = os.path.join(OUTPUT_DIRECTORY, '{:04d}'.format(i), '{:07d}-seg.png'.format(count))
+            rgb_filename = os.path.join(OUTPUT_DIRECTORY, '{:04d}'.format(i), '{:06d}-color.png'.format(count))
+            depth_filename = os.path.join(OUTPUT_DIRECTORY, '{:04d}'.format(i), '{:06d}-depth.png'.format(count))
+            seg_filename = os.path.join(OUTPUT_DIRECTORY, '{:04d}'.format(i), '{:06d}-seg.png'.format(count))
 
             Image.fromarray(rgbB).save(rgb_filename, optimize=True)
             cv2.imwrite(depth_filename, depthB.astype(np.uint16))
@@ -862,14 +862,14 @@ def generate() -> None:
 
             # Create a dictionary containing the arrays
             data_dict = {
-                'class_ids': class_ids,
-                'poses_in_world': poses_in_world,
+                'cls_indexes': class_ids,
+                'poses': poses_in_world,
                 'blendercam_in_world': blendercam_in_world,
-                'K': K
+                'intrinsic_matrix': K
             }
 
             # Save the dictionary as a .npy file
-            npy_filename = os.path.join(OUTPUT_DIRECTORY, '{:04d}'.format(i), '{:07d}_poses_in_world.npy'.format(count))
+            npy_filename = os.path.join(OUTPUT_DIRECTORY, '{:04d}'.format(i), '{:06d}-meta.npy'.format(count))
             np.save(npy_filename, data_dict)
         
 

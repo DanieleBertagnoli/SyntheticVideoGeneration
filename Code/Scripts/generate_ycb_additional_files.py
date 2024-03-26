@@ -23,7 +23,7 @@ def generate(dataset_name:str) -> None:
 
     all_models_loaded = ''
     for model in loaded_models:
-        all_models_loaded += f'{model}\n'
+        all_models_loaded += f'{model[:-4]}\n'
 
     with open(classes_file, 'w') as f:
         f.write(all_models_loaded)

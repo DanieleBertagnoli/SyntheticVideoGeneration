@@ -37,14 +37,14 @@ def get_model_name_from_id(id) -> str:
 
 
 
-def project_points(points_3d: np.ndarray, blendercam_in_world: np.ndarray, K: np.ndarray, img_width: int) -> List[Tuple[float, float]]:
+def project_points(points_3d: np.ndarray, blendercam_in_world: np.ndarray, intrinsic_matrix: np.ndarray, img_width: int) -> List[Tuple[float, float]]:
     """
     Projects 3D points onto a 2D image plane.
 
     Args:
         points_3d (np.ndarray): Array of 3D points with shape (N, 3).
-        blendercam_in_world (np.ndarray): Transformation matrix from Blender camera coordinates to world coordinates (4x4).
-        K (np.ndarray): Camera intrinsic matrix (3x3).
+        blendercam_in_world (np.ndarray): 
+        intrinsic_matrix (np.ndarray): Camera intrinsic matrix (3x3).
         img_width (int): Width of the output image.
 
     Returns:
@@ -59,7 +59,7 @@ def project_points(points_3d: np.ndarray, blendercam_in_world: np.ndarray, K: np
     points_3d_camera = np.dot(blendercam_in_world_inv, points_3d_homogeneous.T).T[:, :3]
 
     # Project points onto image plane
-    points_2d_homogeneous = np.dot(K, points_3d_camera.T).T
+    points_2d_homogeneous = np.dot(intrinsic_matrix, points_3d_camera.T).T
     points_2d = points_2d_homogeneous[:, :2] / points_2d_homogeneous[:, 2:]
 
     points = []
@@ -71,15 +71,15 @@ def project_points(points_3d: np.ndarray, blendercam_in_world: np.ndarray, K: np
 
 
 
-def get_object_dimensions(model_path, pose_in_world, blendercam_in_world, K, img_width, bbox_adjustment) -> Tuple[float, float]:
+def get_object_dimensions(model_path, poses, rotation_translation_matrix, intrinsic_matrix, img_width, bbox_adjustment) -> Tuple[float, float]:
     """
     Get the dimensions and projected points of an object in an image.
 
     Args:
         - model_path (str): The file path to the 3D model of the object.
-        - pose_in_world (np.ndarray): The 4x4 transformation matrix representing the pose of the object in world coordinates.
-        - blendercam_in_world (np.ndarray): The 4x4 transformation matrix representing the pose of the camera in world coordinates.
-        - K (np.ndarray): The camera intrinsic matrix.
+        - poses (np.ndarray): The 4x4 transformation matrix representing the pose of the object in world coordinates.
+        - rotation_translation_matrix (np.ndarray): 
+        - intrinsic_matrix (np.ndarray): The camera intrinsic matrix.
         - img_width (int): The width of the image.
         - bbox_adjustment (int): The adjustment value for the bounding box.
 
@@ -92,10 +92,10 @@ def get_object_dimensions(model_path, pose_in_world, blendercam_in_world, K, img
     
     # Apply the 6D pose of the object relative to the world
     transformed_mesh = mesh.copy()
-    transformed_mesh.apply_transform(pose_in_world)
+    transformed_mesh.apply_transform(poses)
     
     # Project the vertices of the 3D model onto the image
-    projected_points = project_points(transformed_mesh.vertices, blendercam_in_world, K, img_width)
+    projected_points = project_points(transformed_mesh.vertices, rotation_translation_matrix, intrinsic_matrix, img_width)
     
     # Calculate the bounding box around the projected points
     bbox_x_min, bbox_y_min = np.min(projected_points, axis=0)
@@ -114,16 +114,16 @@ def get_object_dimensions(model_path, pose_in_world, blendercam_in_world, K, img
 
 
 
-def generated_bboxes(model_paths, blendercam_in_world, pose_in_world, image_path, model_id, K, img_width, bbox_adjustment, show_image=False) -> np.ndarray:
+def generated_bboxes(model_paths, rotation_translation_matrix, poses, image_path, model_id, intrinsic_matrix, img_width, bbox_adjustment, show_image=False) -> np.ndarray:
     """
     Generate bounding boxes on an image for a given object.
 
     Args:
-        blendercam_in_world (numpy.ndarray): Pose transformation matrix of the Blender camera in world coordinates.
-        pose_in_world (numpy.ndarray): Pose transformation matrix of the object in world coordinates.
+        rotation_translation_matrix (numpy.ndarray): Pose transformation matrix of the Blender camera in world coordinates.
+        poses (numpy.ndarray): Pose transformation matrix of the object in world coordinates.
         image_path (str): Path to the input image.
         model_id (str): ID of the object model.
-        K (numpy.ndarray): Camera intrinsic matrix.
+        intrinsic_matrix (numpy.ndarray): Camera intrinsic matrix.
         show_image (bool, optional): Whether to display the image with bounding boxes. Defaults to False.
 
     Returns:
@@ -140,7 +140,7 @@ def generated_bboxes(model_paths, blendercam_in_world, pose_in_world, image_path
             break
 
     # Get the bbox
-    bbox, points = get_object_dimensions(model_path, pose_in_world, blendercam_in_world, K, img_width, bbox_adjustment)
+    bbox, points = get_object_dimensions(model_path, poses, rotation_translation_matrix, intrinsic_matrix, img_width, bbox_adjustment)
 
     if show_image:
         # Read the input image
@@ -223,7 +223,7 @@ if __name__ == '__main__':
 
     folder_list = os.listdir(GENERATED_SCENES_PATH)
     folder_list.sort()
-    for folder_name in folder_list:
+    for folder_name in folder_list[-1:]:
         folder_name_path = os.path.join(GENERATED_SCENES_PATH, folder_name)
 
         if not os.path.isdir(folder_name_path):
@@ -239,7 +239,7 @@ if __name__ == '__main__':
                 continue
 
             # Extract scene ID from file name
-            scene_id = file_name.split('_')[0]
+            scene_id = file_name.split('-')[0]
 
             # Load metadata from the file
             metadata = np.load(os.path.join(folder_name_path, file_name), allow_pickle=True).item()
@@ -250,7 +250,7 @@ if __name__ == '__main__':
             # Iterate through class IDs in the metadata
             new_class_ids = []
             new_poses = []
-            for class_id in metadata['class_ids']:
+            for class_id in metadata['cls_indexes']:
                 # Generate bounding box for the object
 
                 model_name = get_model_name_from_id(class_id)
@@ -258,20 +258,20 @@ if __name__ == '__main__':
 
                 bbox = generated_bboxes(model_paths,
                                         metadata['blendercam_in_world'],
-                                        metadata['poses_in_world'][count_object_id],
+                                        metadata['poses'][count_object_id],
                                         os.path.join(folder_name_path, f'{scene_id}-color.png'),
                                         class_id,
-                                        metadata['K'], 
+                                        metadata['intrinsic_matrix'], 
                                         config_file['camera_settings']['width'],
                                         config_file['bbox_adjustment'],
-                                        False)
+                                        True)
                 
                 (x1, y1, x2, y2) = (bbox[0][0], bbox[0][1], bbox[2][0], bbox[2][1])
 
                 if is_box_inside((x1, y1, x2, y2)):
                     bboxes[model_name].append(bbox)
                     new_class_ids.append(class_id)
-                    new_poses.append(metadata['poses_in_world'][count_object_id])
+                    new_poses.append(metadata['poses'][count_object_id])
                 
                 count_object_id += 1
 
@@ -280,14 +280,14 @@ if __name__ == '__main__':
                 for model in bboxes:
                     for model_instance in bboxes[model]:
                         bbox_coords = f'{model_instance[0][0]} {model_instance[0][1]} {model_instance[2][0]} {model_instance[2][1]}'
-                        f.write(f"{model} {bbox_coords}\n")
+                        f.write(f"{model[:-4]} {bbox_coords}\n")
             
             
             data_dict = {
-                'class_ids': new_class_ids,
+                'cls_indexes': new_class_ids,
                 'poses_in_world':new_poses,
                 'blendercam_in_world': metadata['blendercam_in_world'],
-                'K': metadata['K']
+                'intrinsic_matrix': metadata['intrinsic_matrix']
             }
 
             # Save the dictionary as a .npy file
