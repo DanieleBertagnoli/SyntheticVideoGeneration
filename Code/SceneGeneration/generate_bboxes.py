@@ -203,7 +203,6 @@ if __name__ == '__main__':
 
     # Define paths
     CURRENT_DIR_PATH = os.path.dirname(__file__)
-    GENERATED_SCENES_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'GeneratedScenes')
     CONFIG_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Configs', 'scene_generation.yml')
 
     with open(CONFIG_PATH, 'r') as f:
@@ -211,6 +210,8 @@ if __name__ == '__main__':
 
     dataset_name = config_file['dataset_name']
 
+    GENERATED_SCENES_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets', dataset_name, 'GeneratedScenes')
+    
     OBJECT_MODELS_DIR_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets', dataset_name, 'Models')
 
     model_folders = os.listdir(OBJECT_MODELS_DIR_PATH)

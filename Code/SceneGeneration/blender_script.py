@@ -674,7 +674,7 @@ def generate() -> None:
     with open(MODELS_ID_FILE_PATH, 'r') as f:
         models_id = yaml.safe_load(f)
 
-    OUTPUT_DIRECTORY = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'GeneratedScenes')
+    OUTPUT_DIRECTORY = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets', dataset_name, 'GeneratedScenes')
     if not os.path.exists(OUTPUT_DIRECTORY):
         os.makedirs(OUTPUT_DIRECTORY)
 

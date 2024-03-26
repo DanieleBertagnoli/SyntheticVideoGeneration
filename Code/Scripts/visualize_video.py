@@ -33,16 +33,16 @@ def draw_bboxes(img, filename: str):
 
 
 
-def generate_video_from_frames(directory:str, id_scene:int, fps=24, draw_boxes=False) -> None:
+def generate_video_from_frames(input_dir:str, output_dir:str, id_scene:int, fps=24, draw_boxes=False) -> None:
     
-    output_video_path = os.path.join(directory, f'{id_scene}.mp4')
+    output_video_path = os.path.join(output_dir, f'{id_scene}.mp4')
 
-    directory = os.path.join(directory, id_scene)
+    input_dir = os.path.join(input_dir, id_scene)
 
-    frame_files = sorted(os.listdir(directory))
+    frame_files = sorted(os.listdir(input_dir))
     frame_files = [f for f in frame_files if f.endswith('-color.png')]  # Filter out only PNG files
     frame_files = sorted(frame_files, key=lambda x: int(x.split('-')[0]))  # Sort files numerically
-    frame = cv2.imread(os.path.join(directory, frame_files[0]))
+    frame = cv2.imread(os.path.join(input_dir, frame_files[0]))
     height, width, layers = frame.shape
 
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Specify the codec
@@ -50,9 +50,9 @@ def generate_video_from_frames(directory:str, id_scene:int, fps=24, draw_boxes=F
 
     for filename in frame_files:
 
-        img = cv2.imread(os.path.join(directory, filename))
+        img = cv2.imread(os.path.join(input_dir, filename))
         if draw_boxes:
-            img = draw_bboxes(img, os.path.join(directory, filename))
+            img = draw_bboxes(img, os.path.join(input_dir, filename))
 
         video.write(img)
 
@@ -67,10 +67,17 @@ if __name__ == '__main__':
     with open(os.path.join(DATA_PATH, 'Configs', 'scene_generation.yml')) as f:
         config_file = yaml.safe_load(f)
 
-    input_directory = os.path.join(DATA_PATH, 'GeneratedScenes')
-    for id_scene in os.listdir(input_directory):
-        
+    input_directory = os.path.join(DATA_PATH, 'Datasets', config_file['dataset_name'], 'GeneratedScenes')
+    output_directory = os.path.join(DATA_PATH, 'Datasets', config_file['dataset_name'], 'Video')
+    
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+
+    for id_scene in sorted(os.listdir(input_directory)):
+
+        print(f'\n\n--- Generating video for {id_scene} scene ---\n\n')
+
         if not os.path.isdir(os.path.join(input_directory, id_scene)):
             continue
         
-        generate_video_from_frames(input_directory, id_scene, config_file['fps'], True)
+        generate_video_from_frames(input_directory, output_directory, id_scene, config_file['fps'], True)

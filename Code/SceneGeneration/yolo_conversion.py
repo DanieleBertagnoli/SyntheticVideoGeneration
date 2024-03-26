@@ -85,7 +85,7 @@ def to_yolo(generated_scenes_path, data, width_img=640, height_img=480):
                 x_centre = ((x_min + x_max) / 2) / width_img
                 y_centre = ((y_max + y_min) / 2) / height_img
                 width = (x_max - x_min) / width_img
-                height = (y_min - y_max) / height_img
+                height = (y_max - y_min) / height_img
 
                 # objcet_id conversion
                 object_id = data.get(object_name)

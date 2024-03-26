@@ -16,7 +16,7 @@ def start_rendering(config_file:dict, reset_folder:bool) -> None:
     blender_script_path = os.path.join(CURRENT_DIR_PATH, 'blender_script.py')
     data_path = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data')
 
-    OUTPUT_DIRECTORY = os.path.join(data_path, 'GeneratedScenes')
+    OUTPUT_DIRECTORY = os.path.join(data_path, 'Datasets', config_file['dataset_name'], 'GeneratedScenes')
     if os.path.exists(OUTPUT_DIRECTORY) and reset_folder:
         shutil.rmtree(OUTPUT_DIRECTORY)
 
