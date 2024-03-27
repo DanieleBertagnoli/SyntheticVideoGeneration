@@ -223,7 +223,7 @@ if __name__ == '__main__':
 
     folder_list = os.listdir(GENERATED_SCENES_PATH)
     folder_list.sort()
-    for folder_name in folder_list[-1:]:
+    for folder_name in folder_list:
         folder_name_path = os.path.join(GENERATED_SCENES_PATH, folder_name)
 
         if not os.path.isdir(folder_name_path):
@@ -264,7 +264,7 @@ if __name__ == '__main__':
                                         metadata['intrinsic_matrix'], 
                                         config_file['camera_settings']['width'],
                                         config_file['bbox_adjustment'],
-                                        True)
+                                        False)
                 
                 (x1, y1, x2, y2) = (bbox[0][0], bbox[0][1], bbox[2][0], bbox[2][1])
 
@@ -285,7 +285,7 @@ if __name__ == '__main__':
             
             data_dict = {
                 'cls_indexes': new_class_ids,
-                'poses_in_world':new_poses,
+                'poses':new_poses,
                 'blendercam_in_world': metadata['blendercam_in_world'],
                 'intrinsic_matrix': metadata['intrinsic_matrix']
             }

@@ -163,10 +163,16 @@ def organize_yolo_dataset(yolo_dataset_path):
 if __name__ == '__main__':
 
 
-    # Define paths
     CURRENT_DIR_PATH = os.path.dirname(__file__)
-    GENERATED_SCENES_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'GeneratedScenes')
-    GENERATED_VIDEOS_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'GeneratedVideos')
+    CONFIG_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Configs', 'scene_generation.yml')
+
+    with open(CONFIG_PATH, 'r') as f:
+        config_file = yaml.safe_load(f)
+
+    dataset_name = config_file['dataset_name']
+
+    GENERATED_SCENES_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets', dataset_name, 'GeneratedScenes')
+    GENERATED_VIDEOS_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets', dataset_name, 'GeneratedVideos')
     YML_DATA_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Configs', 'models_id.yml')
     YOLO_DATASET_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets','YoloDataset')
 
