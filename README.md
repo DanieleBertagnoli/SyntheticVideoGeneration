@@ -1,5 +1,7 @@
 # SyntheticVideoGeneration
-This project has been inspired by the synthetic frame generation process provided by the [iros20-6d-pose-tracking](https://github.com/wenbowen123/iros20-6d-pose-tracking) project. This repository allows you to generate synthetic videos from your CAD models. The models are dynamically loaded into a Blender scene, and through a keyframe generation process, the camera moves along spherical points smoothly to create the final video. The whole project is designed to work with YCB-Video datasets like. The project has been tested on both Linux (Ubuntu 22.04) and Windows.
+This project has been inspired by the synthetic frame generation process provided by the [iros20-6d-pose-tracking](https://github.com/wenbowen123/iros20-6d-pose-tracking) project. This repository allows you to generate synthetic videos from your CAD models. For each frame in each video sequence, will be generated also a `meta.npy` containing additional informations, such as ground-truth 6DoF of each object in the frame, bounding boxes of those objects and much other information specified in the dedicated section. file The models are dynamically loaded into a Blender scene, and through a keyframe generation process, the camera moves along spherical points smoothly to create the final video. The whole project is designed to work with YCB-Video datasets like, follow the installation steps below to use it. 
+
+The project has been tested on both Linux (Ubuntu 22.04) and Windows.
 
 ## Installation
 We recomend the use of Anaconda (or Miniconda) to run the project since we used Python 3.10.
@@ -63,17 +65,17 @@ This script will generate a new directory `Data/Datasets/MyDataset/GeneratedScen
  - `xxxx-color.png`: RBG Frame.
  - `xxxx-depth.png`: Depth map of the frame.
  - `xxxx-seg.png`: Segmentation map with the all you models segmented.
- - `xxxx-poses_in_world.npy`: Numpy file containing:
-    1. `class_ids`: IDs of the objects in the scene (the models are picked randomly), the IDs are those specified in the `models_id.yml` file.
-    2. `poses_in_world`: 4x4 matrix specifying the 6D pose of the objects ($i$-th matrix corresponds to the 6Dposes of the $i$-th model in `class_ids`).
-    3. `blendercam_in_world`: 4x4 matrix specifying the 6D pose of the camera.
-    4. `K`: Matrix specifying the camera intrinsic parameters.
+ - `xxxx-meta.npy`: Numpy file containing:
+    1. `cls_indexes`: IDs of the objects in the scene (the models are picked randomly), the IDs are those specified in the `models_id.yml` file.
+    2. `poses`: 4x4 matrix specifying the 6DoF pose of the objects ($i$-th matrix corresponds to the 6Dposes of the $i$-th model in `class_ids`).
+    3. `blendercam_in_world`: 4x4 matrix specifying the 6DoF pose of the camera.
+    4. `intrinsic_matrix`: Matrix specifying the camera intrinsic parameters.
 
 ### 2. Generate bounding boxes (Optional)
 ```
 python Code/SceneGeneration/generate_bboxes.py
 ```
-This script will loop over the generated sequences to generat an addition file per frame called `xxxx-box.txt`. Using the information provieded by the `.npy` files, the ground-truth boxes are computed for each object. The boxes are represented using the upper-right and lower-left corners.
+This script will loop over the generated sequences to generat an addition file per frame called `xxxx-box.txt`. Using the information provieded by the `.npy` files, the ground-truth boxes are computed for each object. The boxes are represented using the upper-right and lower-left corners. The script will also modify the `xxxx-meta.npy` files such that for all those objects that are not inside the frame, their information are removed from the dictionary.
 
 ### 3. Convert bounding boxes in a YOLO format (Optional)
 ```
