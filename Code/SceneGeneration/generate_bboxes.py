@@ -8,6 +8,35 @@ import cv2
 import yaml
 
 
+def get_model_name_from_id(id) -> str:
+    """
+    Retrieve the name of a model given its ID.
+
+    Args:
+        id (str): The ID of the model to find the name for.
+
+    Returns:
+        str: The name of the model corresponding to the given ID, if found.
+             None if no matching model ID is found in the YAML file.
+    """
+
+    # Construct the path to the YAML file containing model IDs and names
+    yaml_path = os.path.join(os.path.dirname(__file__), '..', '..', 'Data', 'Configs', 'models_id.yml')
+    
+    # Open the YAML file
+    with open(yaml_path, 'r') as file: 
+        # Load YAML content into a dictionary
+        models = yaml.load(file, Loader=yaml.FullLoader)
+        
+        # Iterate through each key-value pair in the dictionary
+        for key, value in models.items():
+            # If the value (model ID) matches the input ID
+            if value == id:
+                # Return the corresponding key (model name)
+                return key
+
+
+
 def project_points(points_3d: np.ndarray, blendercam_in_world: np.ndarray, intrinsic_matrix: np.ndarray, img_width: int) -> List[Tuple[float, float]]:
     """
     Projects 3D points onto a 2D image plane.
@@ -218,10 +247,11 @@ if __name__ == '__main__':
             # Iterate through class IDs in the metadata
             new_class_ids = []
             new_poses = []
-            for model_name in metadata['cls_indexes']:
+            for class_id in metadata['cls_indexes']:
                 # Generate bounding box for the object
 
                 bboxes[model_name] = []
+                model_name = get_model_name_from_id(class_id)
 
                 bbox = generated_bboxes(model_paths,
                                         metadata['blendercam_in_world'],
