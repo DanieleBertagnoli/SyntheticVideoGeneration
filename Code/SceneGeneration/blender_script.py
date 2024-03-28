@@ -828,9 +828,6 @@ def generate(num_scenes:int) -> None:
             # Create the keyframes for the movement
             move_camera_smoothly(starting_frame, ending_frame)
 
-        # Names of the loaded models, we will save them in the .npy file
-        models_loaded = [os.path.basename(f[:-4]) for f in random_models] 
-
         # Generate the scene
         for count in range(total_frame_num):
     
@@ -869,7 +866,7 @@ def generate(num_scenes:int) -> None:
 
             # Create a dictionary containing the arrays 
             data_dict = {
-                'cls_indexes': models_loaded,
+                'cls_indexes': class_ids,
                 'poses': poses_in_world,
                 'blendercam_in_world': blendercam_in_world,
                 'intrinsic_matrix': K
