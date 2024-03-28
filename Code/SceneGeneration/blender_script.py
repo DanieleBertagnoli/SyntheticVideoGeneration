@@ -867,7 +867,7 @@ def generate(num_scenes:int) -> None:
                 
             poses_in_world = np.array(poses_in_world)
 
-            # Create a dictionary containing the arrays
+            # Create a dictionary containing the arrays 
             data_dict = {
                 'cls_indexes': models_loaded,
                 'poses': poses_in_world,
