@@ -8,35 +8,6 @@ import cv2
 import yaml
 
 
-def get_model_name_from_id(id) -> str:
-    """
-    Retrieve the name of a model given its ID.
-
-    Args:
-        id (str): The ID of the model to find the name for.
-
-    Returns:
-        str: The name of the model corresponding to the given ID, if found.
-             None if no matching model ID is found in the YAML file.
-    """
-
-    # Construct the path to the YAML file containing model IDs and names
-    yaml_path = os.path.join(os.path.dirname(__file__), '..', '..', 'Data', 'Configs', 'models_id.yml')
-    
-    # Open the YAML file
-    with open(yaml_path, 'r') as file:
-        # Load YAML content into a dictionary
-        models = yaml.load(file, Loader=yaml.FullLoader)
-        
-        # Iterate through each key-value pair in the dictionary
-        for key, value in models.items():
-            # If the value (model ID) matches the input ID
-            if value == id:
-                # Return the corresponding key (model name)
-                return key
-
-
-
 def project_points(points_3d: np.ndarray, blendercam_in_world: np.ndarray, intrinsic_matrix: np.ndarray, img_width: int) -> List[Tuple[float, float]]:
     """
     Projects 3D points onto a 2D image plane.
@@ -114,7 +85,7 @@ def get_object_dimensions(model_path, poses, rotation_translation_matrix, intrin
 
 
 
-def generated_bboxes(model_paths, rotation_translation_matrix, poses, image_path, model_id, intrinsic_matrix, img_width, bbox_adjustment, show_image=False) -> np.ndarray:
+def generated_bboxes(model_paths, rotation_translation_matrix, poses, image_path, model_name, intrinsic_matrix, img_width, bbox_adjustment, show_image=False) -> np.ndarray:
     """
     Generate bounding boxes on an image for a given object.
 
@@ -122,16 +93,13 @@ def generated_bboxes(model_paths, rotation_translation_matrix, poses, image_path
         rotation_translation_matrix (numpy.ndarray): Pose transformation matrix of the Blender camera in world coordinates.
         poses (numpy.ndarray): Pose transformation matrix of the object in world coordinates.
         image_path (str): Path to the input image.
-        model_id (str): ID of the object model.
+        model_name (str): Name of the object model.
         intrinsic_matrix (numpy.ndarray): Camera intrinsic matrix.
         show_image (bool, optional): Whether to display the image with bounding boxes. Defaults to False.
 
     Returns:
         numpy.ndarray: Bounding box coordinates.
     """
-
-    # Get the name of the object model
-    model_name = get_model_name_from_id(model_id)
 
     # Get the model abs path
     for path in model_paths:
@@ -250,17 +218,16 @@ if __name__ == '__main__':
             # Iterate through class IDs in the metadata
             new_class_ids = []
             new_poses = []
-            for class_id in metadata['cls_indexes']:
+            for model_name in metadata['cls_indexes']:
                 # Generate bounding box for the object
 
-                model_name = get_model_name_from_id(class_id)
                 bboxes[model_name] = []
 
                 bbox = generated_bboxes(model_paths,
                                         metadata['blendercam_in_world'],
                                         metadata['poses'][count_object_id],
                                         os.path.join(folder_name_path, f'{scene_id}-color.png'),
-                                        class_id,
+                                        model_name,
                                         metadata['intrinsic_matrix'], 
                                         config_file['camera_settings']['width'],
                                         config_file['bbox_adjustment'],
@@ -270,7 +237,7 @@ if __name__ == '__main__':
 
                 if is_box_inside((x1, y1, x2, y2)):
                     bboxes[model_name].append(bbox)
-                    new_class_ids.append(class_id)
+                    new_class_ids.append(model_name)
                     new_poses.append(metadata['poses'][count_object_id])
                 
                 count_object_id += 1
