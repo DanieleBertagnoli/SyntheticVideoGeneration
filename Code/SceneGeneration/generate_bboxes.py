@@ -24,7 +24,7 @@ def get_model_name_from_id(id) -> str:
     yaml_path = os.path.join(os.path.dirname(__file__), '..', '..', 'Data', 'Configs', 'models_id.yml')
     
     # Open the YAML file
-    with open(yaml_path, 'r') as file:
+    with open(yaml_path, 'r') as file: 
         # Load YAML content into a dictionary
         models = yaml.load(file, Loader=yaml.FullLoader)
         
