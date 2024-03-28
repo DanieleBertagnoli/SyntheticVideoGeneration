@@ -247,10 +247,11 @@ if __name__ == '__main__':
             # Iterate through class IDs in the metadata
             new_class_ids = []
             new_poses = []
-            for model_name in metadata['cls_indexes']:
+            for class_id in metadata['cls_indexes']:
                 # Generate bounding box for the object
 
                 bboxes[model_name] = []
+                model_name = get_model_name_from_id(class_id)
 
                 bbox = generated_bboxes(model_paths,
                                         metadata['blendercam_in_world'],
