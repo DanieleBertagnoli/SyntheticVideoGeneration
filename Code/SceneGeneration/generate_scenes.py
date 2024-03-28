@@ -20,12 +20,13 @@ def start_rendering(config_file:dict, reset_folder:bool) -> None:
     if os.path.exists(OUTPUT_DIRECTORY) and reset_folder:
         shutil.rmtree(OUTPUT_DIRECTORY)
 
-    for blender_scene_file in config_file['blender_files'].values():
+    for blender_scene_file in config_file['blender_files']:
         print(f'\n --- Start rendering using {blender_scene_file} --- \n')
         blender_start_file_path = os.path.join(data_path, 'BlenderScenes', blender_scene_file)
+        num_scenes_to_generate = config_file['blender_files'][blender_scene_file]
 
         try:
-            render_cmd = f'{BLENDER_EXECUTABLE_PATH} {blender_start_file_path} -b -P {blender_script_path}'
+            render_cmd = f'{BLENDER_EXECUTABLE_PATH} {blender_start_file_path} -b -P {blender_script_path} -- {num_scenes_to_generate}'
             os.system(render_cmd)
         except:
             print(f'\n !!! Render failed. render_cmd: {render_cmd} !!! \n')

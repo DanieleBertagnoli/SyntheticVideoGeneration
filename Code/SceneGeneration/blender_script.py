@@ -7,6 +7,7 @@ import glob
 import random
 import math
 from typing import *
+import argparse
 
 code_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(code_dir)
@@ -656,9 +657,13 @@ def interpolate_bezier(bezier_obj: bpy.types.Object, t: float) -> Vector:
 
 
 
-def generate() -> None:
+def generate(num_scenes:int) -> None:
     """
     Generates scenes using Blender based on provided configurations.
+
+    Args:
+        - num_scenes (int): Number of scenes to be generated.
+
     """
     
     # Set up all the paths and configurations vars
@@ -681,7 +686,6 @@ def generate() -> None:
     BACKGROUND_FOLDER = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'BackgroundTextures')
     OBJECT_MODELS_DIR_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets', dataset_name, 'Models')
 
-    num_scenes = config_file['num_scenes_to_generate']
     fps = config_file['fps']
     cam_movements_per_scene = config_file['cam_movements_per_scene']
     cam_movements_duration_in_seconds = config_file['cam_movements_duration_in_seconds']
@@ -881,4 +885,13 @@ def generate() -> None:
 
 
 if __name__ == '__main__':
-    generate()
+
+    argv = sys.argv
+    argv = argv[argv.index("--") + 1:]  # get all args after "--"
+
+    num_scenes = int(argv[0])
+    if not num_scenes or num_scenes <= 0:
+        print('\n\n!!! Please specify a valid num_scenes number !!!\n\n')
+        sys.exit()
+
+    generate(num_scenes)
