@@ -45,6 +45,7 @@ def generate_yaml(dataset_name):
             yaml.dump(yaml_data, file, default_flow_style=False)
         print("YAML file generated successfully:", yaml_file)
 
+
         yaml_file = os.path.join(dataset_path, 'models_id.yml')
         with open(yaml_file, 'w') as file:
             yaml.dump(yaml_data, file, default_flow_style=False)
