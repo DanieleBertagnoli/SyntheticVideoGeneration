@@ -829,7 +829,7 @@ def generate(num_scenes:int) -> None:
             move_camera_smoothly(starting_frame, ending_frame)
 
         # Generate the scene
-        for count in range(total_frame_num):
+        for count in range(1, total_frame_num):
     
             print('\n\n\n\n --- Generated ' + str(count)+'/'+str(total_frame_num)+' frames --- \n\n\n\n')
             

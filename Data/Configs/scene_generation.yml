@@ -5,9 +5,9 @@ blender_files: # List of Blender files to be used for scene generation and the n
     '1.blend': 3
     '2.blend': 2
 
-fps: 1  # Frames per second for animation
-cam_movements_per_scene: [1, 1]  # Range of camera movements per scene (min, max)
-cam_movements_duration_in_seconds: [1, 1]  # Range of duration for camera movements in seconds (min, max)
+fps: 24  # Frames per second for animation
+cam_movements_per_scene: [3, 8]  # Range of camera movements per scene (min, max)
+cam_movements_duration_in_seconds: [4, 8]  # Range of duration for camera movements in seconds (min, max)
 
 
 blender_settings:  # Blender settings
@@ -31,4 +31,4 @@ camera_settings:  # Intrinsic camera parameters
     centerY: 2.413109000000000037e+02
 
 
-bbox_adjustment: 20  # Adjustment value for bounding box (in pixels)
+bbox_adjustment: 3  # Adjustment value for bounding box (in %)

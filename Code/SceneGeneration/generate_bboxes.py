@@ -27,7 +27,7 @@ def get_model_name_from_id(id) -> str:
     with open(yaml_path, 'r') as file: 
         # Load YAML content into a dictionary
         models = yaml.load(file, Loader=yaml.FullLoader)
-        
+
         # Iterate through each key-value pair in the dictionary
         for key, value in models.items():
             # If the value (model ID) matches the input ID
@@ -101,11 +101,15 @@ def get_object_dimensions(model_path, poses, rotation_translation_matrix, intrin
     bbox_x_min, bbox_y_min = np.min(projected_points, axis=0)
     bbox_x_max, bbox_y_max = np.max(projected_points, axis=0)
     
-    # Calculate the coordinates of the bounding box vertices
-    top_left = [bbox_x_min - bbox_adjustment, bbox_y_min - bbox_adjustment]
-    bottom_left = [bbox_x_min - bbox_adjustment, bbox_y_max + bbox_adjustment]
-    top_right = [bbox_x_max + bbox_adjustment, bbox_y_min - bbox_adjustment]
-    bottom_right = [bbox_x_max + bbox_adjustment, bbox_y_max + bbox_adjustment]
+    # Calculate the adjustment values
+    width_adjustment = (bbox_x_max - bbox_x_min) * bbox_adjustment / 100
+    height_adjustment = (bbox_y_max - bbox_y_min) * bbox_adjustment / 100
+    
+    # Calculate the coordinates of the bounding box vertices with adjustment
+    top_left = [int(bbox_x_min - width_adjustment), int(bbox_y_min - height_adjustment)]
+    bottom_left = [int(bbox_x_min - width_adjustment), int(bbox_y_max + height_adjustment)]
+    top_right = [int(bbox_x_max + width_adjustment), int(bbox_y_min - height_adjustment)]
+    bottom_right = [int(bbox_x_max + width_adjustment), int(bbox_y_max + height_adjustment)]
     
     # Return the bounding box vertices as a numpy array
     bounding_box_vertices = np.array([top_left, bottom_left, bottom_right, top_right], dtype=np.int32)
@@ -114,7 +118,7 @@ def get_object_dimensions(model_path, poses, rotation_translation_matrix, intrin
 
 
 
-def generated_bboxes(model_paths, rotation_translation_matrix, poses, image_path, model_name, intrinsic_matrix, img_width, bbox_adjustment, show_image=False) -> np.ndarray:
+def generated_bboxes(model_paths, rotation_translation_matrix, poses, image_path, model_name, intrinsic_matrix, img_width, bbox_adjustment, cls_ind, show_image=False) -> np.ndarray:
     """
     Generate bounding boxes on an image for a given object.
 
@@ -140,6 +144,7 @@ def generated_bboxes(model_paths, rotation_translation_matrix, poses, image_path
     bbox, points = get_object_dimensions(model_path, poses, rotation_translation_matrix, intrinsic_matrix, img_width, bbox_adjustment)
 
     if show_image:
+
         # Read the input image
         image = cv2.imread(image_path)
 
@@ -229,7 +234,7 @@ if __name__ == '__main__':
         print(f'\n\n --- Generating bboxes for sequence {folder_name} ---\n\n')
 
         # Iterate through files in the directory
-        for file_name in os.listdir(folder_name_path):
+        for file_name in sorted(os.listdir(folder_name_path)):
 
             # Check if the file is an npy file
             if not file_name.endswith('.npy'):
@@ -248,10 +253,11 @@ if __name__ == '__main__':
             new_class_ids = []
             new_poses = []
             for class_id in metadata['cls_indexes']:
+
                 # Generate bounding box for the object
+                model_name = get_model_name_from_id(class_id)
 
                 bboxes[model_name] = []
-                model_name = get_model_name_from_id(class_id)
 
                 bbox = generated_bboxes(model_paths,
                                         metadata['blendercam_in_world'],
@@ -261,13 +267,14 @@ if __name__ == '__main__':
                                         metadata['intrinsic_matrix'], 
                                         config_file['camera_settings']['width'],
                                         config_file['bbox_adjustment'],
-                                        False)
+                                        metadata['cls_indexes'],
+                                        True)
                 
                 (x1, y1, x2, y2) = (bbox[0][0], bbox[0][1], bbox[2][0], bbox[2][1])
 
                 if is_box_inside((x1, y1, x2, y2)):
                     bboxes[model_name].append(bbox)
-                    new_class_ids.append(model_name)
+                    new_class_ids.append(class_id)
                     new_poses.append(metadata['poses'][count_object_id])
                 
                 count_object_id += 1
