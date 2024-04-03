@@ -22,7 +22,6 @@ def get_model_name_from_id(id) -> str:
         str: The name of the model corresponding to the given ID, if found.
              None if no matching model ID is found in the YAML file.
     """
-    id = id + 1 # TODO: remove it
 
     # Construct the path to the YAML file containing model IDs and names
     yaml_path = os.path.join(os.path.dirname(__file__), '..', '..', 'Data', 'Configs', 'models_id.yml')
