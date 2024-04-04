@@ -259,8 +259,6 @@ def load_object_model(model_path: str, index: int, name: str) -> None:
         - name (str): Name to assign to the object.
     """
 
-    print('Loading object ', model_path)
-
     # Import the OBJ model
     bpy.ops.import_scene.obj(filepath=model_path)
     
@@ -511,6 +509,8 @@ def set_objects_parameters() -> Tuple[Dict[int, bpy.types.Object], np.ndarray]:
         # Get the class ID of the object
         class_id = int(ob.pass_index)
 
+        print('\n\n', ob.name, ' ', class_id, '\n')
+
         # Map the class ID to the object in the dictionary (255 as all the objects are insert with an ID < 255, 
         #all the others are lights and blender additional stuffs)
         if class_id < 255:
@@ -518,7 +518,6 @@ def set_objects_parameters() -> Tuple[Dict[int, bpy.types.Object], np.ndarray]:
         
     # Get the list of class IDs
     class_ids = np.array(list(id2ob.keys()))
-    print('class_ids',class_ids)
 
     return id2ob, class_ids
 
@@ -759,7 +758,7 @@ def generate(num_scenes:int) -> None:
         random_models = np.random.choice(object_model_files, num_elements, replace=False)
 
         # Add the selected models in the blender scene
-        for model_file_path in random_models:
+        for model_file_path in object_model_files:
             file_name = os.path.basename(model_file_path)
             load_object_model(model_file_path, models_id[file_name], models_id[file_name])
         
