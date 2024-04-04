@@ -271,10 +271,10 @@ def process_folder(folder_name):
                 
             (x1, y1, x2, y2) = (bbox[0][0], bbox[0][1], bbox[2][0], bbox[2][1])
 
-            if is_box_inside((x1, y1, x2, y2)):
-                bboxes[model_name].append(bbox)
-                new_class_ids.append(class_id)
-                new_poses.append(metadata['poses'][count_object_id])
+            #if is_box_inside((x1, y1, x2, y2)):
+            bboxes[model_name].append(bbox)
+            new_class_ids.append(class_id)
+            new_poses.append(metadata['poses'][count_object_id])
                 
             count_object_id += 1
 

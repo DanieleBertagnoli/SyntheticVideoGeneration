@@ -42,13 +42,15 @@ def generate_yaml(dataset_name):
     try:
         # Output the YAML data to a file
         with open(yaml_file, 'w') as file:
-            yaml.dump(yaml_data, file, default_flow_style=False)
+            yaml.dump(yaml_data, file, default_flow_style=False, sort_keys=False)
+
         print("YAML file generated successfully:", yaml_file)
 
 
         yaml_file = os.path.join(dataset_path, 'models_id.yml')
         with open(yaml_file, 'w') as file:
-            yaml.dump(yaml_data, file, default_flow_style=False)
+            yaml.dump(yaml_data, file, default_flow_style=False, sort_keys=False)
+
         print("YAML file generated successfully:", yaml_file)
 
     except Exception as e:
