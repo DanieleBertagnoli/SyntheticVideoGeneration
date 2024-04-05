@@ -11,6 +11,7 @@ import cv2
 import yaml
 
 
+
 def get_model_name_from_id(id) -> str:
     """
     Retrieve the name of a model given its ID.
@@ -40,18 +41,19 @@ def get_model_name_from_id(id) -> str:
 
 
 
-def project_points(points_3d: np.ndarray, blendercam_in_world: np.ndarray, intrinsic_matrix: np.ndarray, img_width: int, img_height:int) -> List[Tuple[float, float]]:
+def project_points(points_3d: np.ndarray, blendercam_in_world: np.ndarray, intrinsic_matrix: np.ndarray, img_width: int, img_height: int) -> List[Tuple[float, float]]:
     """
-    Projects 3D points onto a 2D image plane.
+    Projects 3D points onto the 2D image plane.
 
-    Args:
-        points_3d (np.ndarray): Array of 3D points with shape (N, 3).
-        blendercam_in_world (np.ndarray): 
-        intrinsic_matrix (np.ndarray): Camera intrinsic matrix (3x3).
-        img_width (int): Width of the output image.
+    Parameters:
+        points_3d (numpy.ndarray): Array of 3D points to be projected.
+        blendercam_in_world (numpy.ndarray): Transformation matrix representing the camera position relative to the world.
+        intrinsic_matrix (numpy.ndarray): Camera intrinsic matrix.
+        img_width (int): Width of the image in pixels.
+        img_height (int): Height of the image in pixels.
 
     Returns:
-        List[Tuple[float, float]]: List of 2D points (x, y) projected onto the image plane.
+        List[Tuple[float, float]]: List of 2D points representing the projected points on the image plane.
     """
 
     # Convert points to homogeneous coordinates
@@ -88,20 +90,29 @@ def project_points(points_3d: np.ndarray, blendercam_in_world: np.ndarray, intri
 
 
 
-def get_bbox_2d(model_path, poses, blendercam_in_world, intrinsic_matrix, img_width, img_heigth, bbox_adjustment) -> Tuple[float, float]:
+def get_bbox_2d(model_path: str,
+                poses: np.ndarray,
+                blendercam_in_world: np.ndarray,
+                intrinsic_matrix: np.ndarray,
+                img_width: int,
+                img_height: int,
+                bbox_adjustment: float) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Get the dimensions and projected points of an object in an image.
+    Computes the 2D bounding box around a 3D object projected onto an image.
 
-    Args:
-        - model_path (str): The file path to the 3D model of the object.
-        - poses (np.ndarray): The 4x4 transformation matrix representing the pose of the object in world coordinates.
-        - blendercam_in_world (np.ndarray): 
-        - intrinsic_matrix (np.ndarray): The camera intrinsic matrix.
-        - img_width (int): The width of the image.
-        - bbox_adjustment (int): The adjustment value for the bounding box.
+    Parameters:
+        model_path (str): Path to the 3D model file.
+        poses (numpy.ndarray): Transformation matrix representing the 6D pose of the object relative to the world.
+        blendercam_in_world (numpy.ndarray): Transformation matrix representing the camera position relative to the world.
+        intrinsic_matrix (numpy.ndarray): Camera intrinsic matrix.
+        img_width (int): Width of the image in pixels.
+        img_height (int): Height of the image in pixels.
+        bbox_adjustment (float): Percentage adjustment to scale the bounding box.
 
     Returns:
-        Tuple[np.ndarray, np.ndarray]: A tuple containing the vertices of the bounding box and the projected points of the object.
+        Tuple[np.ndarray, np.ndarray]: A tuple containing:
+            - bounding_box_vertices (numpy.ndarray): Vertices of the 2D bounding box.
+            - projected_points (numpy.ndarray): Projected vertices of the 3D model onto the image.
     """
 
     # Load the 3D model of the object
@@ -135,7 +146,31 @@ def get_bbox_2d(model_path, poses, blendercam_in_world, intrinsic_matrix, img_wi
 
 
 
-def get_bbox_3d(model_path, poses, blendercam_in_world, intrinsic_matrix, img_width, img_height, bbox_adjustment):
+def get_bbox_3d(model_path: str,
+                poses: np.ndarray,
+                blendercam_in_world: np.ndarray,
+                intrinsic_matrix: np.ndarray,
+                img_width: int,
+                img_height: int,
+                bbox_adjustment: float) -> tuple:
+    """
+    Computes the 3D oriented bounding box of a transformed 3D model and projects it onto the image plane.
+
+    Parameters:
+        model_path (str): Path to the 3D model file.
+        poses (numpy.ndarray): Transformation matrix representing the 6D pose of the object relative to the world.
+        blendercam_in_world (numpy.ndarray): Transformation matrix representing the camera position relative to the world.
+        intrinsic_matrix (numpy.ndarray): Camera intrinsic matrix.
+        img_width (int): Width of the image in pixels.
+        img_height (int): Height of the image in pixels.
+        bbox_adjustment (float): Percentage adjustment to scale the bounding box.
+
+    Returns:
+        tuple: A tuple containing two numpy arrays:
+            - bbox_vertices (numpy.ndarray): Vertices of the scaled bounding box in 3D space.
+            - projected_bbox_vertices (numpy.ndarray): Projected vertices of the bounding box onto the image plane.
+    """
+
     # Load the 3D model of the object
     mesh = trimesh.load(model_path)
     
@@ -147,14 +182,14 @@ def get_bbox_3d(model_path, poses, blendercam_in_world, intrinsic_matrix, img_wi
     bounding_box = transformed_mesh.bounding_box_oriented
     
     # Get the vertices of the bounding box
-    bounding_box_vertices = bounding_box.vertices
+    bbox_vertices = bounding_box.vertices
 
     # Calculate scale factor from bbox_adjustment
     scale_factor = 1 + (bbox_adjustment / 100)
     # Calculate the centroid of the bounding box to scale vertices around it
-    centroid = np.mean(bounding_box_vertices, axis=0)
+    centroid = np.mean(bbox_vertices, axis=0)
     # Scale the vertices relative to the centroid
-    bbox_vertices = centroid + scale_factor * (bounding_box_vertices - centroid)
+    bbox_vertices = centroid + scale_factor * (bbox_vertices - centroid)
 
     # Project the scaled vertices of the bounding box onto the image plane
     projected_bbox_vertices = np.array(project_points(bbox_vertices, blendercam_in_world, intrinsic_matrix, img_width, img_height), dtype=np.int32)
@@ -162,66 +197,19 @@ def get_bbox_3d(model_path, poses, blendercam_in_world, intrinsic_matrix, img_wi
     return bbox_vertices, projected_bbox_vertices
 
 
-def generated_bboxes(model_paths, blendercam_in_world, poses, image_path, model_name, intrinsic_matrix, img_width, img_heigth, bbox_adjustment_2d, bbox_adjustment_3d, show_image=False) -> np.ndarray:
+
+def draw_3d_bbox(image: np.ndarray, points: list, color: tuple) -> np.ndarray:
     """
-    Generates and optionally displays 2D and 3D bounding boxes for a specified model
-    within an image, given the model's pose, the camera parameters, and the image dimensions.
+    Draws a 3D bounding box on the input image.
 
     Parameters:
-    - model_paths (List[str]): A list of paths to 3D model files.
-    - blendercam_in_world (np.ndarray): The transformation matrix representing the camera's pose in the world.
-    - poses (np.ndarray): The transformation matrix representing the model's pose in the world.
-    - image_path (str): The path to the image file where the bounding boxes will be drawn.
-    - model_name (str): The name of the model to find in `model_paths`.
-    - intrinsic_matrix (np.ndarray): The camera's intrinsic matrix.
-    - img_width (int): The width of the image.
-    - img_height (int): The height of the image.
-    - bbox_adjustment (float): A percentage to adjust the bounding box size by.
-    - show_image (bool): If True, the image with the drawn bounding boxes will be displayed.
+        image (numpy.ndarray): The input image.
+        points (list): List of 3D points representing the vertices of the bounding box.
+        color (tuple): Color of the bounding box in BGR format.
 
     Returns:
-    Tuple[np.ndarray, np.ndarray, List[Tuple[float, float]]]: A tuple containing:
-    - bbox_2d (np.ndarray): The vertices of the 2D bounding box.
-    - bbox_3d (np.ndarray): The vertices of the 3D bounding box before projection.
-    - projected_bbox_3d_vertices (List[Tuple[float, float]]): The vertices of the 3D bounding box after projection onto the 2D image plane.
-
-    The function locates the specified model based on `model_name`, computes its 2D and 3D bounding boxes based on the given `poses` and `blendercam_in_world` matrices, and optionally displays these bounding boxes on the specified image. It projects the 3D bounding box vertices onto the 2D image plane using the given camera intrinsic parameters and the specified image dimensions. The function then draws the model's projected vertices, the 2D bounding box, and the 3D bounding box onto the image if `show_image` is set to True.
+        numpy.ndarray: The image with the 3D bounding box drawn on it.
     """
-
-    # Get the model abs path
-    for path in model_paths:
-        if model_name in path:
-            model_path = path
-            break
-
-    # Get the bbox
-    bbox_2d, model_projected_vertices = get_bbox_2d(model_path, poses, blendercam_in_world, intrinsic_matrix, img_width, img_heigth, bbox_adjustment_2d)
-    bbox_3d, projected_bbox_3d_vertices = get_bbox_3d(model_path, poses, blendercam_in_world, intrinsic_matrix, img_width, img_heigth, bbox_adjustment_3d)
-    
-    if show_image:
-
-        # Read the input image
-        image = cv2.imread(image_path)
-
-        # Draw the point and bounding box on the image
-        thickness = 2
-        for p in model_projected_vertices:
-            image = cv2.circle(image, (int(p[0]), int(p[1])), 4, (0, 255, 0), thickness)
-
-        image = cv2.polylines(image, [bbox_2d], True, (255, 255, 0), thickness)
-        image = draw_3d_bbox(image, projected_bbox_3d_vertices, (0, 0, 255))
-        
-        # Display the image
-        cv2.imshow('Image', image)
-        
-        # Wait for a 'q' key press to close the image window
-        if cv2.waitKey(0) & 0xFF == ord('q'):
-            cv2.destroyAllWindows()
-
-    return bbox_2d, bbox_3d, projected_bbox_3d_vertices
-
-
-def draw_3d_bbox(image, points, color):
 
     points = [tuple(map(int, point)) for point in points]
 
@@ -247,43 +235,86 @@ def draw_3d_bbox(image, points, color):
 
     return image
 
-def is_box_inside(box, threshold=10) -> bool:
+
+
+def generated_bboxes(model_paths: list,
+                    blendercam_in_world: np.ndarray,
+                    poses: np.ndarray,
+                    image_path: str,
+                    model_name: str,
+                    intrinsic_matrix: np.ndarray,
+                    img_width: int,
+                    img_height: int,
+                    bbox_adjustment_2d: float,
+                    bbox_adjustment_3d: float,
+                    show_image: bool = False) -> tuple:
     """
-    Checks if the bounding box is inside the image for at least a specified threshold percentage.
+    Generates 2D and 3D bounding boxes for a given model and image.
 
     Parameters:
-        box (tuple): A tuple representing the coordinates of the bounding box in the format (x1, y1, x2, y2).
-        threshold (int, optional): The threshold percentage for the box to be considered inside the image. 
+        model_paths (list): List of paths to 3D model files.
+        blendercam_in_world (numpy.ndarray): Transformation matrix representing the camera position relative to the world.
+        poses (numpy.ndarray): Transformation matrix representing the 6D pose of the object relative to the world.
+        image_path (str): Path to the input image.
+        model_name (str): Name of the model to be processed.
+        intrinsic_matrix (numpy.ndarray): Camera intrinsic matrix.
+        img_width (int): Width of the image in pixels.
+        img_height (int): Height of the image in pixels.
+        bbox_adjustment_2d (float): Percentage adjustment to scale the 2D bounding box.
+        bbox_adjustment_3d (float): Percentage adjustment to scale the 3D bounding box.
+        show_image (bool, optional): Whether to display the image with bounding boxes. Defaults to False.
 
     Returns:
-        bool: True if the box is inside the image for at least the threshold percentage, False otherwise.
+        tuple: A tuple containing:
+            - bbox_2d (numpy.ndarray): 2D bounding box vertices.
+            - bbox_3d (numpy.ndarray): 3D bounding box vertices.
+            - projected_bbox_3d_vertices (numpy.ndarray): Projected 3D bounding box vertices onto the image plane.
     """
 
-    # Define image dimensions
-    image_width, image_height = (640, 480)
+    # Get the model abs path
+    for path in model_paths:
+        if model_name in path:
+            model_path = path
+            break
+
+    # Get the bbox
+    bbox_2d, model_projected_vertices = get_bbox_2d(model_path, poses, blendercam_in_world, intrinsic_matrix, img_width, img_height, bbox_adjustment_2d)
+    bbox_3d, projected_bbox_3d_vertices = get_bbox_3d(model_path, poses, blendercam_in_world, intrinsic_matrix, img_width, img_height, bbox_adjustment_3d)
     
-    # Extract coordinates of the bounding box
-    x1, y1, x2, y2 = box
+    if show_image:
 
-    # Calculate the area of the bounding box
-    box_area = abs(x2 - x1 * y2 - y1)
+        # Read the input image
+        image = cv2.imread(image_path)
 
-    # Calculate the area of intersection with the image
-    inside_width = min(x2, image_width) - max(x1, 0)
-    inside_height = min(y2, image_height) - max(y1, 0)
-    inside_area = max(inside_width, 0) * max(inside_height, 0)
+        # Draw the point and bounding box on the image
+        thickness = 2
+        for p in model_projected_vertices:
+            image = cv2.circle(image, (int(p[0]), int(p[1])), 4, (0, 255, 0), thickness)
 
-    if box_area == 0:
-        inside_percentage = 0
-    else:
-        # Calculate the percentage of the box inside the image
-        inside_percentage = (inside_area / box_area) * 100
+        image = cv2.polylines(image, [bbox_2d], True, (255, 255, 0), thickness)
+        image = draw_3d_bbox(image, projected_bbox_3d_vertices, (0, 0, 255))
+        
+        # Display the image
+        cv2.imshow('Image', image)
+        
+        # Wait for a 'q' key press to close the image window
+        if cv2.waitKey(0) & 0xFF == ord('q'):
+            cv2.destroyAllWindows()
 
-    # Check if the box is inside the image for at least the threshold percentage
-    return inside_percentage >= threshold
+    return bbox_2d, bbox_3d, projected_bbox_3d_vertices
 
 
-def process_folder(folder_name):
+
+def process_folder(folder_name:str) -> None:
+    """
+    Processes a folder containing scene data by generating bounding boxes for each scene.
+
+    Parameters:
+        folder_name (str): Name of the folder containing scene data.
+
+    Returns:
+        None
+    """
 
     thread_id = threading.get_ident()
     folder_name_path = os.path.join(GENERATED_SCENES_PATH, folder_name)
@@ -383,6 +414,7 @@ def process_folder(folder_name):
 
     delta = int(time() - start)
     print(f'Box generation for sequence {folder_name} done in {delta} seconds by thread {thread_id}')
+
 
 
 if __name__ == '__main__':
