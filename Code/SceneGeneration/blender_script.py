@@ -131,11 +131,6 @@ def reset(dataset_info) -> None:
         else:
             ob.select = False
 
-    # TODO: Reset locations of objects named 'ob' to (9999, y, z)
-    # for ob in bpy.data.objects:
-    #     if 'ob' in ob.name.lower():
-    #         ob.location[0] = 9999
-
 
 
 def setup_camera(H, W, K) -> None:
@@ -509,8 +504,6 @@ def set_objects_parameters() -> Tuple[Dict[int, bpy.types.Object], np.ndarray]:
         # Get the class ID of the object
         class_id = int(ob.pass_index)
 
-        print('\n\n', ob.name, ' ', class_id, '\n')
-
         # Map the class ID to the object in the dictionary (255 as all the objects are insert with an ID < 255, 
         #all the others are lights and blender additional stuffs)
         if class_id < 255:
@@ -758,7 +751,7 @@ def generate(num_scenes:int) -> None:
         random_models = np.random.choice(object_model_files, num_elements, replace=False)
 
         # Add the selected models in the blender scene
-        for model_file_path in object_model_files: #TODO add random models
+        for model_file_path in object_model_files[0:1]: #TODO add random models
             file_name = os.path.basename(model_file_path)
             load_object_model(model_file_path, models_id[file_name], models_id[file_name])
         
@@ -889,7 +882,7 @@ if __name__ == '__main__':
     argv = argv[argv.index("--") + 1:]  # get all args after "--"
 
     num_scenes = int(argv[0])
-    if not num_scenes or num_scenes <= 0:
+    if not num_scenes or num_scenes < 0:
         print('\n\n!!! Please specify a valid num_scenes number !!!\n\n')
         sys.exit()
 

@@ -46,6 +46,25 @@ def generate(dataset_name:str) -> None:
 
         print(f'\n\n --- points.xyz created for {model_name} model ---\n\n')
 
+    file_list_path = os.path.join(dataset_path, 'file_list.txt')
+    if os.path.exists(file_list_path):
+        os.remove(classes_file)
+
+    files = ''
+    generated_scenes_path = os.path.join(dataset_path, 'GeneratedScenes')
+    for sequence in os.listdir(generated_scenes_path):
+        sequence_path = os.path.join(generated_scenes_path, sequence)
+        for file in os.listdir(sequence_path):
+            if not file.endswith('-color.png'):
+                continue
+            file_id = file.split('-')[0]
+            files += f'{sequence}/{file_id}\n'
+
+    with open(file_list_path, 'w') as f:
+        f.write(files)
+
+    print(f'\n\n --- files_list.txt created ---\n\n')
+
 if __name__ == '__main__':
 
     # Define paths

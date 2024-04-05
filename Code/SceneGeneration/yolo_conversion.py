@@ -55,7 +55,7 @@ def create_yolo_dataset(source_folder, destination_folder, generated_videos_path
 def to_yolo(generated_scenes_path, data, width_img=640, height_img=480):
     # for each .txt file in GENERATED_SCENES_PATH
     for box_txt_file in os.listdir(generated_scenes_path):
-        if not box_txt_file.endswith('.txt') or 'yolo' in box_txt_file:
+        if not box_txt_file.endswith('box-2d.txt') or 'yolo' in box_txt_file:
             continue
         base_name, extension = os.path.splitext(box_txt_file)
         yolo_txt_scene = f"{base_name}-yolo{extension}"

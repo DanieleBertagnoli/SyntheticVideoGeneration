@@ -123,7 +123,7 @@ def get_bbox_2d(model_path: str,
     transformed_mesh.apply_transform(poses)
 
     # Project the vertices of the 3D model onto the image
-    projected_points = project_points(transformed_mesh.vertices, blendercam_in_world, intrinsic_matrix, img_width, img_heigth)
+    projected_points = project_points(transformed_mesh.vertices, blendercam_in_world, intrinsic_matrix, img_width, img_height)
 
     # Calculate the bounding box around the projected points
     bbox_x_min, bbox_y_min = np.min(projected_points, axis=0)
@@ -330,7 +330,7 @@ def process_folder(folder_name:str) -> None:
     for file_name in os.listdir(folder_name_path):
 
         # Check if the file is an npy file
-        if not file_name.endswith('.npy') or '79' not in file_name:
+        if not file_name.endswith('.npy'):
             continue
 
         # Extract scene ID from file name
@@ -366,7 +366,7 @@ def process_folder(folder_name:str) -> None:
                                     config_file['camera_settings']['height'],
                                     config_file['bbox_adjustment_2d'],
                                     config_file['bbox_adjustment_3d'],
-                                    True)
+                                    False) # If you want to display them, remember to use one and only one process
 
             #if is_box_inside((x1, y1, x2, y2)):
             bboxes_2d[model_name].append(bbox_2d)
@@ -439,7 +439,7 @@ if __name__ == '__main__':
         model_name = [f for f in os.listdir(model_folder) if f.endswith('.obj')][0]
         model_paths.append(os.path.join(model_folder, model_name))
 
-    folder_list = os.listdir(GENERATED_SCENES_PATH)[-1:]
+    folder_list = os.listdir(GENERATED_SCENES_PATH)
     folder_list.sort()
 
     # Use ThreadPoolExecutor to process each folder in parallel
