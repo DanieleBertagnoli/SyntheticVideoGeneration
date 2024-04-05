@@ -31,4 +31,5 @@ camera_settings:  # Intrinsic camera parameters
     centerY: 2.413109000000000037e+02
 
 
-bbox_adjustment: 3  # Adjustment value for bounding box (in %)
+bbox_adjustment_2d: 3  # Adjustment value for bounding box (in %)
+bbox_adjustment_3d: 5  # Adjustment value for bounding box (in %)

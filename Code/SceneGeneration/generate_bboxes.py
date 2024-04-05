@@ -40,7 +40,7 @@ def get_model_name_from_id(id) -> str:
 
 
 
-def project_points(points_3d: np.ndarray, blendercam_in_world: np.ndarray, intrinsic_matrix: np.ndarray, img_width: int, img_heigth:int) -> List[Tuple[float, float]]:
+def project_points(points_3d: np.ndarray, blendercam_in_world: np.ndarray, intrinsic_matrix: np.ndarray, img_width: int, img_height:int) -> List[Tuple[float, float]]:
     """
     Projects 3D points onto a 2D image plane.
 
@@ -67,8 +67,8 @@ def project_points(points_3d: np.ndarray, blendercam_in_world: np.ndarray, intri
 
     points = []
     for p in points_2d:
-        x = img_width/2 + (img_width/2 - p[0])
-        y = p[1]
+        x = round(img_width/2 + (img_width/2 - p[0]))
+        y = round(p[1])
 
         # If the object is not in camera at all, the projected points could assume too negative or too positive values, 
         # therefore we put a cap to avoid overflows in the next operations
@@ -79,8 +79,8 @@ def project_points(points_3d: np.ndarray, blendercam_in_world: np.ndarray, intri
 
         if x > img_width + 300:
             x = img_width + 300
-        if y > img_heigth + 300:
-            y = img_heigth + 300
+        if y > img_height + 300:
+            y = img_height + 300
 
         points.append([x, y])
 
@@ -135,9 +135,7 @@ def get_bbox_2d(model_path, poses, blendercam_in_world, intrinsic_matrix, img_wi
 
 
 
-def get_bbox_3d(model_path, poses, blendercam_in_world, intrinsic_matrix, img_width, img_heigth, bbox_adjustment): # TODO add bbox adj
-
-
+def get_bbox_3d(model_path, poses, blendercam_in_world, intrinsic_matrix, img_width, img_height, bbox_adjustment):
     # Load the 3D model of the object
     mesh = trimesh.load(model_path)
     
@@ -145,21 +143,26 @@ def get_bbox_3d(model_path, poses, blendercam_in_world, intrinsic_matrix, img_wi
     transformed_mesh = mesh.copy()
     transformed_mesh.apply_transform(poses)
 
-    # Compute the axis-aligned bounding box of the transformed mesh
+    # Compute the oriented bounding box of the transformed mesh
     bounding_box = transformed_mesh.bounding_box_oriented
     
-    # Extract three vertices from the bounding box
-    # We use the vertices of the bounding box and select three that form an "L" shape
+    # Get the vertices of the bounding box
     bounding_box_vertices = bounding_box.vertices
 
-    # Project the vertices of the 3D model onto the image
-    projected_bbox_vertices = np.array(project_points(bounding_box_vertices, blendercam_in_world, intrinsic_matrix, img_width, img_heigth), dtype=np.int32)
+    # Calculate scale factor from bbox_adjustment
+    scale_factor = 1 + (bbox_adjustment / 100)
+    # Calculate the centroid of the bounding box to scale vertices around it
+    centroid = np.mean(bounding_box_vertices, axis=0)
+    # Scale the vertices relative to the centroid
+    bbox_vertices = centroid + scale_factor * (bounding_box_vertices - centroid)
 
-    return bounding_box_vertices, projected_bbox_vertices
+    # Project the scaled vertices of the bounding box onto the image plane
+    projected_bbox_vertices = np.array(project_points(bbox_vertices, blendercam_in_world, intrinsic_matrix, img_width, img_height), dtype=np.int32)
+
+    return bbox_vertices, projected_bbox_vertices
 
 
-
-def generated_bboxes(model_paths, blendercam_in_world, poses, image_path, model_name, intrinsic_matrix, img_width, img_heigth, bbox_adjustment, show_image=False) -> np.ndarray:
+def generated_bboxes(model_paths, blendercam_in_world, poses, image_path, model_name, intrinsic_matrix, img_width, img_heigth, bbox_adjustment_2d, bbox_adjustment_3d, show_image=False) -> np.ndarray:
     """
     Generates and optionally displays 2D and 3D bounding boxes for a specified model
     within an image, given the model's pose, the camera parameters, and the image dimensions.
@@ -192,23 +195,22 @@ def generated_bboxes(model_paths, blendercam_in_world, poses, image_path, model_
             break
 
     # Get the bbox
-    bbox_2d, model_projected_vertices = get_bbox_2d(model_path, poses, blendercam_in_world, intrinsic_matrix, img_width, img_heigth, bbox_adjustment)
-    bbox_3d, projected_bbox_3d_vertices = get_bbox_3d(model_path, poses, blendercam_in_world, intrinsic_matrix, img_width, img_heigth, bbox_adjustment)
-
+    bbox_2d, model_projected_vertices = get_bbox_2d(model_path, poses, blendercam_in_world, intrinsic_matrix, img_width, img_heigth, bbox_adjustment_2d)
+    bbox_3d, projected_bbox_3d_vertices = get_bbox_3d(model_path, poses, blendercam_in_world, intrinsic_matrix, img_width, img_heigth, bbox_adjustment_3d)
+    
     if show_image:
 
         # Read the input image
         image = cv2.imread(image_path)
 
         # Draw the point and bounding box on the image
-        color = (0, 255, 0)  # Green color
         thickness = 2
         for p in model_projected_vertices:
-            image = cv2.circle(image, (int(p[0]), int(p[1])), 4, color, thickness)
+            image = cv2.circle(image, (int(p[0]), int(p[1])), 4, (0, 255, 0), thickness)
 
-        image = cv2.polylines(image, [bbox_2d], True, color, thickness)
-        image = draw_3d_bbox(image, projected_bbox_3d_vertices)
-
+        image = cv2.polylines(image, [bbox_2d], True, (255, 255, 0), thickness)
+        image = draw_3d_bbox(image, projected_bbox_3d_vertices, (0, 0, 255))
+        
         # Display the image
         cv2.imshow('Image', image)
         
@@ -219,34 +221,29 @@ def generated_bboxes(model_paths, blendercam_in_world, poses, image_path, model_
     return bbox_2d, bbox_3d, projected_bbox_3d_vertices
 
 
-def draw_3d_bbox(image, points):
-    # Points are expected in the order:
-    # 0-3: Bottom square in clockwise order starting from the top left corner
-    # 4-7: Top square in clockwise order starting from the top left corner
+def draw_3d_bbox(image, points, color):
 
     points = [tuple(map(int, point)) for point in points]
-
-    print(points)
 
     # Draw bottom square
     points_order = [0,1,3,2]
     for i in range(len(points_order)):
         start_point = points[points_order[i]]
         end_point = points[points_order[(i+1) % len(points_order)]]  # Loop back to the first point
-        image = cv2.line(image, start_point, end_point, (0, 0, 255), 2)
+        image = cv2.line(image, start_point, end_point, color, 2)
     
     # Draw top square
     points_order = [4,5,7,6]
     for i in range(len(points_order)):
         start_point = points[points_order[i]]
         end_point = points[points_order[(i+1) % len(points_order)]]  # Loop back to the first point
-        image = cv2.line(image, start_point, end_point, (0, 0, 255), 2)
+        image = cv2.line(image, start_point, end_point, color, 2)
 
     # Draw vertical lines (edges)
     for i in range(4):
         bottom_point = points[i]
         top_point = points[i+4]
-        image = cv2.line(image, bottom_point, top_point, (0, 0, 255), 2)
+        image = cv2.line(image, bottom_point, top_point, color, 2)
 
     return image
 
@@ -334,9 +331,10 @@ def process_folder(folder_name):
                                     os.path.join(folder_name_path, f'{scene_id}-color.png'),
                                     model_name,
                                     metadata['intrinsic_matrix'], 
-                                    config_file['camera_settings']['width'],
+                                    config_file['camera_settings']['width']-15, # This -15 is chosen in an empirical way, it may depend on the rounding or conversion that are not precise.
                                     config_file['camera_settings']['height'],
-                                    config_file['bbox_adjustment'],
+                                    config_file['bbox_adjustment_2d'],
+                                    config_file['bbox_adjustment_3d'],
                                     True)
 
             #if is_box_inside((x1, y1, x2, y2)):
