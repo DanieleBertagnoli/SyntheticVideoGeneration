@@ -72,15 +72,15 @@ def project_points(points_3d: np.ndarray, blendercam_in_world: np.ndarray, intri
 
         # If the object is not in camera at all, the projected points could assume too negative or too positive values, 
         # therefore we put a cap to avoid overflows in the next operations
-        if x < -1:
-            x = -1
-        if y < -1:
-            y = -1
+        if x < -300:
+            x = -300
+        if y < -300:
+            y = -300
 
-        if x > img_width + 1:
-            x = img_width + 1
-        if y > img_heigth + 1:
-            y = img_heigth + 1
+        if x > img_width + 300:
+            x = img_width + 300
+        if y > img_heigth + 300:
+            y = img_heigth + 300
 
         points.append([x, y])
 
@@ -88,7 +88,7 @@ def project_points(points_3d: np.ndarray, blendercam_in_world: np.ndarray, intri
 
 
 
-def get_object_dimensions(model_path, poses, blendercam_in_world, intrinsic_matrix, img_width, img_heigth, bbox_adjustment) -> Tuple[float, float]:
+def get_bbox_2d(model_path, poses, blendercam_in_world, intrinsic_matrix, img_width, img_heigth, bbox_adjustment) -> Tuple[float, float]:
     """
     Get the dimensions and projected points of an object in an image.
 
@@ -110,7 +110,7 @@ def get_object_dimensions(model_path, poses, blendercam_in_world, intrinsic_matr
     # Apply the 6D pose of the object relative to the world
     transformed_mesh = mesh.copy()
     transformed_mesh.apply_transform(poses)
-    
+
     # Project the vertices of the 3D model onto the image
     projected_points = project_points(transformed_mesh.vertices, blendercam_in_world, intrinsic_matrix, img_width, img_heigth)
 
@@ -135,20 +135,54 @@ def get_object_dimensions(model_path, poses, blendercam_in_world, intrinsic_matr
 
 
 
+def get_bbox_3d(model_path, poses, blendercam_in_world, intrinsic_matrix, img_width, img_heigth, bbox_adjustment): # TODO add bbox adj
+
+
+    # Load the 3D model of the object
+    mesh = trimesh.load(model_path)
+    
+    # Apply the 6D pose of the object relative to the world
+    transformed_mesh = mesh.copy()
+    transformed_mesh.apply_transform(poses)
+
+    # Compute the axis-aligned bounding box of the transformed mesh
+    bounding_box = transformed_mesh.bounding_box_oriented
+    
+    # Extract three vertices from the bounding box
+    # We use the vertices of the bounding box and select three that form an "L" shape
+    bounding_box_vertices = bounding_box.vertices
+
+    # Project the vertices of the 3D model onto the image
+    projected_bbox_vertices = np.array(project_points(bounding_box_vertices, blendercam_in_world, intrinsic_matrix, img_width, img_heigth), dtype=np.int32)
+
+    return bounding_box_vertices, projected_bbox_vertices
+
+
+
 def generated_bboxes(model_paths, blendercam_in_world, poses, image_path, model_name, intrinsic_matrix, img_width, img_heigth, bbox_adjustment, show_image=False) -> np.ndarray:
     """
-    Generate bounding boxes on an image for a given object.
+    Generates and optionally displays 2D and 3D bounding boxes for a specified model
+    within an image, given the model's pose, the camera parameters, and the image dimensions.
 
-    Args:
-        blendercam_in_world (numpy.ndarray): Pose transformation matrix of the Blender camera in world coordinates.
-        poses (numpy.ndarray): Pose transformation matrix of the object in world coordinates.
-        image_path (str): Path to the input image.
-        model_name (str): Name of the object model.
-        intrinsic_matrix (numpy.ndarray): Camera intrinsic matrix.
-        show_image (bool, optional): Whether to display the image with bounding boxes. Defaults to False.
+    Parameters:
+    - model_paths (List[str]): A list of paths to 3D model files.
+    - blendercam_in_world (np.ndarray): The transformation matrix representing the camera's pose in the world.
+    - poses (np.ndarray): The transformation matrix representing the model's pose in the world.
+    - image_path (str): The path to the image file where the bounding boxes will be drawn.
+    - model_name (str): The name of the model to find in `model_paths`.
+    - intrinsic_matrix (np.ndarray): The camera's intrinsic matrix.
+    - img_width (int): The width of the image.
+    - img_height (int): The height of the image.
+    - bbox_adjustment (float): A percentage to adjust the bounding box size by.
+    - show_image (bool): If True, the image with the drawn bounding boxes will be displayed.
 
     Returns:
-        numpy.ndarray: Bounding box coordinates.
+    Tuple[np.ndarray, np.ndarray, List[Tuple[float, float]]]: A tuple containing:
+    - bbox_2d (np.ndarray): The vertices of the 2D bounding box.
+    - bbox_3d (np.ndarray): The vertices of the 3D bounding box before projection.
+    - projected_bbox_3d_vertices (List[Tuple[float, float]]): The vertices of the 3D bounding box after projection onto the 2D image plane.
+
+    The function locates the specified model based on `model_name`, computes its 2D and 3D bounding boxes based on the given `poses` and `blendercam_in_world` matrices, and optionally displays these bounding boxes on the specified image. It projects the 3D bounding box vertices onto the 2D image plane using the given camera intrinsic parameters and the specified image dimensions. The function then draws the model's projected vertices, the 2D bounding box, and the 3D bounding box onto the image if `show_image` is set to True.
     """
 
     # Get the model abs path
@@ -158,7 +192,8 @@ def generated_bboxes(model_paths, blendercam_in_world, poses, image_path, model_
             break
 
     # Get the bbox
-    bbox, points = get_object_dimensions(model_path, poses, blendercam_in_world, intrinsic_matrix, img_width, img_heigth, bbox_adjustment)
+    bbox_2d, model_projected_vertices = get_bbox_2d(model_path, poses, blendercam_in_world, intrinsic_matrix, img_width, img_heigth, bbox_adjustment)
+    bbox_3d, projected_bbox_3d_vertices = get_bbox_3d(model_path, poses, blendercam_in_world, intrinsic_matrix, img_width, img_heigth, bbox_adjustment)
 
     if show_image:
 
@@ -168,10 +203,11 @@ def generated_bboxes(model_paths, blendercam_in_world, poses, image_path, model_
         # Draw the point and bounding box on the image
         color = (0, 255, 0)  # Green color
         thickness = 2
-        for p in points:
+        for p in model_projected_vertices:
             image = cv2.circle(image, (int(p[0]), int(p[1])), 4, color, thickness)
 
-        image = cv2.polylines(image, [bbox], True, color, thickness)
+        image = cv2.polylines(image, [bbox_2d], True, color, thickness)
+        image = draw_3d_bbox(image, projected_bbox_3d_vertices)
 
         # Display the image
         cv2.imshow('Image', image)
@@ -180,9 +216,39 @@ def generated_bboxes(model_paths, blendercam_in_world, poses, image_path, model_
         if cv2.waitKey(0) & 0xFF == ord('q'):
             cv2.destroyAllWindows()
 
-    return bbox
+    return bbox_2d, bbox_3d, projected_bbox_3d_vertices
 
 
+def draw_3d_bbox(image, points):
+    # Points are expected in the order:
+    # 0-3: Bottom square in clockwise order starting from the top left corner
+    # 4-7: Top square in clockwise order starting from the top left corner
+
+    points = [tuple(map(int, point)) for point in points]
+
+    print(points)
+
+    # Draw bottom square
+    points_order = [0,1,3,2]
+    for i in range(len(points_order)):
+        start_point = points[points_order[i]]
+        end_point = points[points_order[(i+1) % len(points_order)]]  # Loop back to the first point
+        image = cv2.line(image, start_point, end_point, (0, 0, 255), 2)
+    
+    # Draw top square
+    points_order = [4,5,7,6]
+    for i in range(len(points_order)):
+        start_point = points[points_order[i]]
+        end_point = points[points_order[(i+1) % len(points_order)]]  # Loop back to the first point
+        image = cv2.line(image, start_point, end_point, (0, 0, 255), 2)
+
+    # Draw vertical lines (edges)
+    for i in range(4):
+        bottom_point = points[i]
+        top_point = points[i+4]
+        image = cv2.line(image, bottom_point, top_point, (0, 0, 255), 2)
+
+    return image
 
 def is_box_inside(box, threshold=10) -> bool:
     """
@@ -236,7 +302,7 @@ def process_folder(folder_name):
     for file_name in os.listdir(folder_name_path):
 
         # Check if the file is an npy file
-        if not file_name.endswith('.npy'):
+        if not file_name.endswith('.npy') or '79' not in file_name:
             continue
 
         # Extract scene ID from file name
@@ -245,7 +311,9 @@ def process_folder(folder_name):
         # Load metadata from the file
         metadata = np.load(os.path.join(folder_name_path, file_name), allow_pickle=True).item()
 
-        bboxes = {}
+        bboxes_2d = {}
+        bboxes_3d = {}
+        bboxes_3d_proj = {}
         count_object_id = 0
             
         # Iterate through class IDs in the metadata
@@ -256,9 +324,11 @@ def process_folder(folder_name):
             # Generate bounding box for the object
             model_name = get_model_name_from_id(class_id)
 
-            bboxes[model_name] = []
+            bboxes_2d[model_name] = []
+            bboxes_3d[model_name] = []
+            bboxes_3d_proj[model_name] = []
 
-            bbox = generated_bboxes(model_paths,
+            bbox_2d, bbox_3d, projected_bbox_3d_vertices = generated_bboxes(model_paths,
                                     metadata['blendercam_in_world'],
                                     metadata['poses'][count_object_id],
                                     os.path.join(folder_name_path, f'{scene_id}-color.png'),
@@ -267,22 +337,38 @@ def process_folder(folder_name):
                                     config_file['camera_settings']['width'],
                                     config_file['camera_settings']['height'],
                                     config_file['bbox_adjustment'],
-                                    False)
-                
-            (x1, y1, x2, y2) = (bbox[0][0], bbox[0][1], bbox[2][0], bbox[2][1])
+                                    True)
 
             #if is_box_inside((x1, y1, x2, y2)):
-            bboxes[model_name].append(bbox)
+            bboxes_2d[model_name].append(bbox_2d)
+            bboxes_3d[model_name].append(bbox_3d)
+            bboxes_3d_proj[model_name].append(projected_bbox_3d_vertices)
             new_class_ids.append(class_id)
             new_poses.append(metadata['poses'][count_object_id])
                 
             count_object_id += 1
 
 
-        with open(os.path.join(folder_name_path, f'{scene_id}-box.txt'), 'w') as f:
-            for model in bboxes:
-                for model_instance in bboxes[model]:
+        with open(os.path.join(folder_name_path, f'{scene_id}-box-2d.txt'), 'w') as f:
+            for model in bboxes_2d:
+                for model_instance in bboxes_2d[model]:
                     bbox_coords = f'{model_instance[0][0]} {model_instance[0][1]} {model_instance[2][0]} {model_instance[2][1]}'
+                    f.write(f"{model[:-4]} {bbox_coords}\n")
+
+        with open(os.path.join(folder_name_path, f'{scene_id}-box-3d.txt'), 'w') as f:
+            for model in bboxes_3d:
+                for model_instance in bboxes_3d[model]:
+                    bbox_coords = ''
+                    for c in model_instance:
+                        bbox_coords += f'{c} '
+                    f.write(f"{model[:-4]} {bbox_coords}\n")
+
+        with open(os.path.join(folder_name_path, f'{scene_id}-box-3d-proj.txt'), 'w') as f:
+            for model in bboxes_3d:
+                for model_instance in bboxes_3d_proj[model]:
+                    bbox_coords = ''
+                    for c in model_instance:
+                        bbox_coords += f'[{c[0]} {c[1]}] '
                     f.write(f"{model[:-4]} {bbox_coords}\n")
             
             
@@ -323,10 +409,10 @@ if __name__ == '__main__':
         model_name = [f for f in os.listdir(model_folder) if f.endswith('.obj')][0]
         model_paths.append(os.path.join(model_folder, model_name))
 
-    folder_list = os.listdir(GENERATED_SCENES_PATH)
+    folder_list = os.listdir(GENERATED_SCENES_PATH)[-1:]
     folder_list.sort()
 
     # Use ThreadPoolExecutor to process each folder in parallel
-    with ThreadPoolExecutor(max_workers=2) as executor:
+    with ThreadPoolExecutor(max_workers=5) as executor:
         # Map the process_folder function to each folder in the folder_list
         results = list(executor.map(process_folder, folder_list))
