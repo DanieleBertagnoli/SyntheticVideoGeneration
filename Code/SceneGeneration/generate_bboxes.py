@@ -304,6 +304,30 @@ def generated_bboxes(model_paths: list,
     return bbox_2d, bbox_3d, projected_bbox_3d_vertices
 
 
+def is_box_inside(bbox:tuple, img_width:int, img_height:int) -> bool:
+    """
+    Check if a bounding box is entirely inside an image.
+
+    Args:
+    - bbox (tuple): Tuple containing bounding box coordinates (x1, y1, x2, y2).
+    - img_width (int): Width of the image.
+    - img_height (int): Height of the image.
+
+    Returns:
+    - bool: True if bounding box is entirely inside the image, False otherwise.
+    """
+
+    x1, y1, x2, y2 = bbox
+
+    # Check if the coordinates are within the image boundaries
+    if (x1 >= 0 and y1 >= 0 and x2 <= img_width and y2 <= img_height):
+        return True
+    else:
+        return False
+
+
+
+
 
 def process_folder(folder_name:str) -> None:
     """
@@ -368,12 +392,13 @@ def process_folder(folder_name:str) -> None:
                                     config_file['bbox_adjustment_3d'],
                                     False) # If you want to display them, remember to use one and only one process
 
-            #if is_box_inside((x1, y1, x2, y2)):
-            bboxes_2d[model_name].append(bbox_2d)
-            bboxes_3d[model_name].append(bbox_3d)
-            bboxes_3d_proj[model_name].append(projected_bbox_3d_vertices)
-            new_class_ids.append(class_id)
-            new_poses.append(metadata['poses'][count_object_id])
+            (x1, y1, x2, y2) = (bbox_2d[0][0], bbox_2d[0][1], bbox_2d[2][0], bbox_2d[2][1])
+            if is_box_inside((x1, y1, x2, y2), config_file['camera_settings']['width'],  config_file['camera_settings']['height']):
+                bboxes_2d[model_name].append(bbox_2d)
+                bboxes_3d[model_name].append(bbox_3d)
+                bboxes_3d_proj[model_name].append(projected_bbox_3d_vertices)
+                new_class_ids.append(class_id)
+                new_poses.append(metadata['poses'][count_object_id])
                 
             count_object_id += 1
 
