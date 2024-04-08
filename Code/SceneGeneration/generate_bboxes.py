@@ -68,7 +68,8 @@ def project_points(points_3d: np.ndarray, blendercam_in_world: np.ndarray, intri
     points_2d = points_2d_homogeneous[:, :2] / points_2d_homogeneous[:, 2:]
 
     points = []
-    for p in points_2d:
+    for i, p in enumerate(points_2d):
+
         x = round(img_width/2 + (img_width/2 - p[0]))
         y = round(p[1])
 
@@ -85,6 +86,9 @@ def project_points(points_3d: np.ndarray, blendercam_in_world: np.ndarray, intri
             y = img_height + 300
 
         points.append([x, y])
+        # If part is behind the camera, then project all the points in (-1,-1)
+        if points_3d_camera[i, 2] > 0: 
+            return [[-1,-1] for _ in range(len(points_2d))]
 
     return points
 
@@ -304,26 +308,39 @@ def generated_bboxes(model_paths: list,
     return bbox_2d, bbox_3d, projected_bbox_3d_vertices
 
 
-def is_box_inside(bbox:tuple, img_width:int, img_height:int) -> bool:
+def is_box_inside(bbox: tuple, img_width: int, img_height: int, threshold_percentage: float) -> bool:
     """
-    Check if a bounding box is entirely inside an image.
+    Check if a bounding box is mostly inside an image based on a given threshold percentage.
 
     Args:
     - bbox (tuple): Tuple containing bounding box coordinates (x1, y1, x2, y2).
     - img_width (int): Width of the image.
     - img_height (int): Height of the image.
+    - threshold_percentage (float): Threshold as a percentage of the total area of the bounding box.
+                                     If the area of the bounding box outside the image exceeds this
+                                     percentage, return False.
 
     Returns:
-    - bool: True if bounding box is entirely inside the image, False otherwise.
+    - bool: True if bounding box is mostly inside the image (outside area is below
+            the threshold percentage), False otherwise.
     """
 
     x1, y1, x2, y2 = bbox
 
-    # Check if the coordinates are within the image boundaries
-    if (x1 >= 0 and y1 >= 0 and x2 <= img_width and y2 <= img_height):
-        return True
-    else:
-        return False
+    # Clamp the coordinates to the image boundaries
+    clamped_x1 = max(x1, 0)
+    clamped_y1 = max(y1, 0)
+    clamped_x2 = min(x2, img_width)
+    clamped_y2 = min(y2, img_height)
+
+    # Calculate the area of the bounding box that is inside the image
+    inside_area = max(0, clamped_x2 - clamped_x1) * max(0, clamped_y2 - clamped_y1)
+
+    # Calculate the total area of the bounding box
+    total_area = (x2 - x1) * (y2 - y1)
+
+    # Check if the outside area exceeds the threshold percentage of the total area
+    return inside_area >= threshold_percentage / 100.0 * total_area
 
 
 
@@ -392,8 +409,11 @@ def process_folder(folder_name:str) -> None:
                                     config_file['bbox_adjustment_3d'],
                                     False) # If you want to display them, remember to use one and only one process
 
+            if len(bbox_2d) == 0:
+                continue
+
             (x1, y1, x2, y2) = (bbox_2d[0][0], bbox_2d[0][1], bbox_2d[2][0], bbox_2d[2][1])
-            if is_box_inside((x1, y1, x2, y2), config_file['camera_settings']['width'],  config_file['camera_settings']['height']):
+            if is_box_inside((x1, y1, x2, y2), config_file['camera_settings']['width'],  config_file['camera_settings']['height'], 20):
                 bboxes_2d[model_name].append(bbox_2d)
                 bboxes_3d[model_name].append(bbox_3d)
                 bboxes_3d_proj[model_name].append(projected_bbox_3d_vertices)
@@ -453,7 +473,7 @@ if __name__ == '__main__':
 
     dataset_name = config_file['dataset_name']
 
-    GENERATED_SCENES_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets', dataset_name, 'GeneratedScenes')
+    GENERATED_SCENES_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets', dataset_name, 'GeneratedScenes_copy')
     
     OBJECT_MODELS_DIR_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets', dataset_name, 'Models')
 

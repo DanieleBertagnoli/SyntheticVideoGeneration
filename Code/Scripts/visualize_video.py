@@ -118,7 +118,7 @@ if __name__ == '__main__':
     with open(os.path.join(DATA_PATH, 'Configs', 'scene_generation.yml')) as f:
         config_file = yaml.safe_load(f)
 
-    input_directory = os.path.join(DATA_PATH, 'Datasets', config_file['dataset_name'], 'GeneratedScenes')
+    input_directory = os.path.join(DATA_PATH, 'Datasets', config_file['dataset_name'], 'GeneratedScenes_copy')
     output_directory = os.path.join(DATA_PATH, 'Datasets', config_file['dataset_name'], 'Video')
     
     if not os.path.exists(output_directory):
