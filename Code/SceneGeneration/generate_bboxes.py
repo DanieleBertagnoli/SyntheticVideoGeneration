@@ -324,8 +324,13 @@ def is_box_inside(bbox: tuple, img_width: int, img_height: int, threshold_percen
     - bool: True if bounding box is mostly inside the image (outside area is below
             the threshold percentage), False otherwise.
     """
-
     x1, y1, x2, y2 = bbox
+
+    # Correct handling of the bounding box total area calculation
+    total_area = (x2 - x1) * (y2 - y1)
+    if total_area <= 0:
+        # If the total area is non-positive, the bbox is invalid or has zero area, implying it cannot be inside
+        return False
 
     # Clamp the coordinates to the image boundaries
     clamped_x1 = max(x1, 0)
@@ -334,13 +339,17 @@ def is_box_inside(bbox: tuple, img_width: int, img_height: int, threshold_percen
     clamped_y2 = min(y2, img_height)
 
     # Calculate the area of the bounding box that is inside the image
-    inside_area = max(0, clamped_x2 - clamped_x1) * max(0, clamped_y2 - clamped_y1)
+    inside_area = (clamped_x2 - clamped_x1) * (clamped_y2 - clamped_y1)
+    if inside_area <= 0:
+        # If the inside area is non-positive, the bbox does not intersect with the image
+        return False
 
-    # Calculate the total area of the bounding box
-    total_area = (x2 - x1) * (y2 - y1)
+    # Calculate the percentage of the bounding box that is inside the image
+    inside_percentage = (inside_area / total_area) * 100
 
-    # Check if the outside area exceeds the threshold percentage of the total area
-    return inside_area >= threshold_percentage / 100.0 * total_area
+    # Check if the inside percentage meets or exceeds the threshold
+    return inside_percentage >= threshold_percentage
+
 
 
 
@@ -409,8 +418,6 @@ def process_folder(folder_name:str) -> None:
                                     config_file['bbox_adjustment_3d'],
                                     False) # If you want to display them, remember to use one and only one process
 
-            if len(bbox_2d) == 0:
-                continue
 
             (x1, y1, x2, y2) = (bbox_2d[0][0], bbox_2d[0][1], bbox_2d[2][0], bbox_2d[2][1])
             if is_box_inside((x1, y1, x2, y2), config_file['camera_settings']['width'],  config_file['camera_settings']['height'], 20):
@@ -473,7 +480,7 @@ if __name__ == '__main__':
 
     dataset_name = config_file['dataset_name']
 
-    GENERATED_SCENES_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets', dataset_name, 'GeneratedScenes_copy')
+    GENERATED_SCENES_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets', dataset_name, 'GeneratedScenes')
     
     OBJECT_MODELS_DIR_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets', dataset_name, 'Models')
 
