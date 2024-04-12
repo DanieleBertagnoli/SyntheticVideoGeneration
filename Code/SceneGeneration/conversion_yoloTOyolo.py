@@ -4,7 +4,12 @@ import yaml
 
 def move_files(src_dir, dest_dir):
     for filename in os.listdir(src_dir):
-        shutil.copy(os.path.join(src_dir, filename), dest_dir)
+        if '-box-2d-yolo' in filename:
+            new_filename = filename.replace('-box-2d-yolo', '')
+            os.rename(os.path.join(src_dir, filename), os.path.join(src_dir, new_filename))
+            shutil.copy(os.path.join(src_dir, new_filename), dest_dir)
+        else:
+            shutil.copy(os.path.join(src_dir, filename), dest_dir)
 
 def new_yolo(src_dir, dest_dir):
 
@@ -15,8 +20,8 @@ def new_yolo(src_dir, dest_dir):
     new_join_path = os.path.join(dest_dir, 'YoloDatasetV2')
     train_images = os.path.join(new_join_path, 'train', 'images')
     train_labels = os.path.join(new_join_path, 'train', 'labels')
-    test_images = os.path.join(new_join_path, 'val', 'images')
-    test_labels = os.path.join(new_join_path, 'val', 'labels')
+    test_images = os.path.join(new_join_path, 'test', 'images')
+    test_labels = os.path.join(new_join_path, 'test', 'labels')
     os.makedirs(train_images, exist_ok=True)
     os.makedirs(train_labels, exist_ok=True)
     os.makedirs(test_images, exist_ok=True)
@@ -31,6 +36,14 @@ def new_yolo(src_dir, dest_dir):
     move_files(path_test_images, test_images)
     move_files(path_test_labels, test_labels)
 
+def create_txt_list(yolo_dataset_path, yolo_dataset_path_test, yolo_dataset_path_train):
+    # create train.txt file in yolo_dataset_path
+    with open(os.path.join(yolo_dataset_path, 'train.txt'), 'w') as f:
+        for filename in os.listdir(yolo_dataset_path_train):
+            f.write("./images/" + filename + "\n")
+    with open(os.path.join(yolo_dataset_path, 'val.txt'), 'w') as f:
+        for filename in os.listdir(yolo_dataset_path_test):
+            f.write("./images/" + filename + "\n")
 
 
 if __name__ == '__main__':
@@ -50,3 +63,10 @@ if __name__ == '__main__':
     YOLO_DATASET_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets','YoloDataset')
 
     new_yolo(YOLO_DATASET_PATH, DEST_DATASET_PATH)
+
+    YOLOV2_DATASET_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets','YoloDatasetV2')
+    YOLOV2_DATASET_PATH_TEST = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets','YoloDatasetV2', 'test', 'images')
+    YOLOV2_DATASET_PATH_TRAIN = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets','YoloDatasetV2', 'train', 'images')
+
+
+    create_txt_list(YOLOV2_DATASET_PATH, YOLOV2_DATASET_PATH_TEST, YOLOV2_DATASET_PATH_TRAIN)
