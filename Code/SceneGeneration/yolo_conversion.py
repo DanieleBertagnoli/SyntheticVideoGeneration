@@ -2,133 +2,170 @@ import os
 import yaml
 import shutil
 import random
+from time import time
+
+def clamp(value: float, min_value: float, max_value: float) -> float:
+    """
+    Clamps a value within a specified range.
+
+    Args:
+        value (float): The value to be clamped.
+        min_value (float): The minimum allowed value.
+        max_value (float): The maximum allowed value.
+
+    Returns:
+        float: The clamped value.
+    """
+
+    # Clamp the value within the specified range
+    return max(min_value, min(value, max_value))
 
 
-def extract_data(generated_scenes_path, generated_videos_path):
-    # copy all the files from the generated scenes to the generated videos
-    if not os.path.exists(generated_videos_path):
-        os.makedirs(generated_videos_path)
+
+def extract_data(generated_scenes_path: str, yolo_dataset_path: str) -> None:
+    """
+    Extracts data from generated scenes to a YOLO dataset directory.
+
+    Args:
+        generated_scenes_path (str): Path to the directory containing generated scenes.
+        yolo_dataset_path (str): Path to the directory where YOLO dataset will be stored.
+
+    Returns:
+        None
+    """
+
+    print(f'Copying {generated_scenes_path} into {yolo_dataset_path}')
+    shutil.copytree(generated_scenes_path, yolo_dataset_path)
+
+    print('Extracting files...')    
     
-    for item in os.listdir(generated_scenes_path):
-        s_path = os.path.join(generated_scenes_path, item)
-        d_path = os.path.join(generated_videos_path, item)
-    
-        if os.path.isdir(s_path):
-            shutil.copytree(s_path, d_path)
-        else:
-            shutil.copy(s_path, generated_videos_path)
+    # Move files within folders and rename them
+    file_list = sorted(os.listdir(yolo_dataset_path))
+    for folder_name in file_list:
+        folder_path = os.path.join(yolo_dataset_path, folder_name)
 
+        for file_name in os.listdir(folder_path):
 
-    for folder_name in os.listdir(generated_scenes_path):
-        full_folder_path = os.path.join(generated_scenes_path, folder_name)
+            file_path = os.path.join(folder_path, file_name)
 
-        if os.path.isdir(full_folder_path):
-            for file_name in os.listdir(full_folder_path):
-                full_file_path = os.path.join(full_folder_path, file_name)
+            if 'color' in file_name:
+                file_name = folder_name + '-' + file_name.replace('-color', '')
 
-                new_file_name = folder_name + '-' + file_name
-                full_new_file_path = os.path.join(generated_scenes_path, new_file_name)
+            elif 'box-2d' in file_name:
+                file_name = folder_name + '-' + file_name
 
-                shutil.move(full_file_path, full_new_file_path)
+            else:
+                continue
 
-        os.rmdir(full_folder_path)
+            new_file_path = os.path.join(yolo_dataset_path, file_name)
+            shutil.move(file_path, new_file_path) # Move files and rename them
 
-def create_yolo_dataset(source_folder, destination_folder, generated_videos_path):
-
-    for file_name in os.listdir(source_folder):
-        if file_name.endswith('-color.png') or 'yolo' in file_name:
-            full_file_name = os.path.join(source_folder, file_name)
-            if os.path.isfile(full_file_name):
-                shutil.copy(full_file_name, destination_folder)
-            if 'yolo' in file_name:
-                os.remove(full_file_name)
-
-    shutil.rmtree(source_folder)
-
-    base_folder = os.path.dirname(generated_videos_path)
-
-    new_path = os.path.join(base_folder, 'GeneratedScenes')
-    os.rename(generated_videos_path, new_path)
+        shutil.rmtree(folder_path) # Remove empty folder after moving its contents
 
 
 
-def to_yolo(generated_scenes_path, data, width_img=640, height_img=480):
-    # for each .txt file in GENERATED_SCENES_PATH
-    for box_txt_file in os.listdir(generated_scenes_path):
-        if not box_txt_file.endswith('box-2d.txt') or 'yolo' in box_txt_file:
+def to_yolo(yolo_dataset_path: str, data: dict, width_img: int = 640, height_img: int = 480) -> None:
+    """
+    Converts bounding box annotations to YOLO format.
+
+    Args:
+        yolo_dataset_path (str): Path to the YOLO dataset directory.
+        data (dict): Dictionary containing object names and corresponding object IDs.
+        width_img (int): Width of the image (default is 640).
+        height_img (int): Height of the image (default is 480).
+
+    Returns:
+        None
+    """
+
+    file_list = os.listdir(yolo_dataset_path)
+    for box_txt_file in file_list:
+
+        box_txt_file = os.path.join(yolo_dataset_path, box_txt_file)
+
+        if not box_txt_file.endswith('.txt'):
             continue
+
         base_name, extension = os.path.splitext(box_txt_file)
-        yolo_txt_scene = f"{base_name}-yolo{extension}"
-        with open(os.path.join(generated_scenes_path, box_txt_file), 'r') as f_in, open(os.path.join(generated_scenes_path, yolo_txt_scene), 'w') as f_out:
+        base_name = base_name.replace('-box-2d', '')
+        yolo_bbox_file_name = f"{base_name}{extension}"
+        
+        with open(box_txt_file, 'r') as f_in, open(yolo_bbox_file_name, 'w') as f_out:
             for object_line in f_in:
                 portions = object_line.strip().split()
                 object_name, x_min, y_min, x_max, y_max = portions[0], float(portions[1]), float(portions[2]), float(portions[3]), float(portions[4])
 
-                if x_min < 0:
-                    x_min = 0
-                elif x_min > width_img:
-                    x_min = width_img
-                if x_max < 0:
-                    x_max = 0
-                elif x_max > width_img:
-                    x_max = width_img
-                if y_max < 0:
-                    y_max = 0
-                elif y_max > height_img:
-                    y_max = height_img
-                if y_min < 0:
-                    y_min = 0
-                elif y_min > height_img:
-                    y_min = height_img
+                # Clamp coordinates to image dimensions
+                x_min = clamp(x_min, 0, width_img)
+                x_max = clamp(x_max, 0, width_img)
+                y_min = clamp(y_min, 0, height_img)
+                y_max = clamp(y_max, 0, height_img)
 
-                # calculate the center and dimensions of the bounding box
+                # Calculate bounding box center and dimensions relative to image size
                 x_centre = ((x_min + x_max) / 2) / width_img
                 y_centre = ((y_max + y_min) / 2) / height_img
                 width = (x_max - x_min) / width_img
                 height = (y_max - y_min) / height_img
 
-
-                # objcet_id conversion
+                # Convert object name to object ID
                 object_id = data.get(object_name + '.obj')
 
-
-                # write new coordinates
+                # Write new coordinates in YOLO format
                 f_out.write(f"{object_id} {x_centre:.2f} {y_centre:.2f} {width:.2f} {height:.2f}\n")
+        
+        # Close files
+        f_in.close()
+        f_out.close()
 
-def check_and_create_folder(folder_path):
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
-    elif os.path.exists(folder_path):
+        # Remove the original box_txt_file
+        os.remove(box_txt_file)
+
+
+
+def check_and_create_folder(folder_path: str) -> None:
+    """
+    Checks if a folder exists, creates it if it doesn't, and clears it if it does.
+
+    Args:
+        folder_path (str): Path to the folder to be checked or created.
+
+    Returns:
+        None
+    """
+    # Check if folder_path exists
+    if os.path.exists(folder_path):
+        # Remove existing folder and its contents
         shutil.rmtree(folder_path)
-        os.makedirs(folder_path)
+
+    os.makedirs(folder_path)  # Create a new empty folder
 
 
-def organize_yolo_dataset(yolo_dataset_path):
 
-    # txt and png must be the same name
-    for file_name in os.listdir(yolo_dataset_path):
-        full_path = os.path.join(yolo_dataset_path, file_name)
-        n, ext = os.path.splitext(file_name)
-        if ext == '.png':
-            new_file_name = file_name.replace('-color', '')
-        elif ext == '.txt':
-            new_file_name = file_name.replace('-box-yolo', '')
-        else:
-            continue
-        new_file_path = os.path.join(yolo_dataset_path, new_file_name)
-        os.rename(full_path, new_file_path)
+def organize_yolo_dataset(yolo_dataset_path: str) -> None:
+    """
+    Organizes images and labels from a YOLO dataset into separate train and validation sets.
 
-    scenes_names = [os.path.splitext(filename)[0] for filename in os.listdir(yolo_dataset_path)]
-    random.shuffle(scenes_names)    
-    scenes_names = list(set(scenes_names))
+    Args:
+        yolo_dataset_path (str): Path to the YOLO dataset directory.
+
+    Returns:
+        None
+    """
+
+    # Get scene names from image files
+    scenes_names = [os.path.splitext(filename)[0] for filename in os.listdir(yolo_dataset_path) if filename.endswith('.png')]
+    random.shuffle(scenes_names)
     
+    # Split scene names into train and validation sets
     train_files = scenes_names[:int(len(scenes_names)*0.8)]
     val_files = scenes_names[int(len(scenes_names)*0.8):]
 
+    # Define paths for organizing the dataset
     YOLO_DATASET_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets','YoloDataset')
     YOLO_DATASET_PATH_images = os.path.join(YOLO_DATASET_PATH, 'images')
     YOLO_DATASET_PATH_labels = os.path.join(YOLO_DATASET_PATH, 'labels')
 
+    # Create necessary folders
     check_and_create_folder(YOLO_DATASET_PATH_images)
     check_and_create_folder(YOLO_DATASET_PATH_labels)
 
@@ -142,8 +179,10 @@ def organize_yolo_dataset(yolo_dataset_path):
     check_and_create_folder(YOLO_DATASET_PATH_labels_train)
     check_and_create_folder(YOLO_DATASET_PATH_labels_val)
 
+    # Move image and label files to appropriate train or validation folders
     for file_name in os.listdir(yolo_dataset_path):
         n, ext = os.path.splitext(file_name)
+
         if file_name.endswith('.png'):
             full_path = os.path.join(yolo_dataset_path, file_name)
             if os.path.isfile(full_path):
@@ -151,6 +190,7 @@ def organize_yolo_dataset(yolo_dataset_path):
                     shutil.move(full_path, os.path.join(YOLO_DATASET_PATH_images_train, file_name))
                 elif n in val_files:
                     shutil.move(full_path, os.path.join(YOLO_DATASET_PATH_images_val, file_name))
+
         elif file_name.endswith('.txt'):
             full_path = os.path.join(yolo_dataset_path, file_name)
             if os.path.isfile(full_path):
@@ -160,40 +200,54 @@ def organize_yolo_dataset(yolo_dataset_path):
                     shutil.move(full_path, os.path.join(YOLO_DATASET_PATH_labels_val, file_name))
 
 
-    
 
 if __name__ == '__main__':
 
 
+    # Get the current directory path
     CURRENT_DIR_PATH = os.path.dirname(__file__)
-    CONFIG_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Configs', 'scene_generation.yml')
 
+    # Load configuration file
+    CONFIG_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Configs', 'scene_generation.yml')
     with open(CONFIG_PATH, 'r') as f:
         config_file = yaml.safe_load(f)
 
+    # Extract relevant information from the configuration file
     dataset_name = config_file['dataset_name']
-
     GENERATED_SCENES_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets', dataset_name, 'GeneratedScenes')
-    GENERATED_VIDEOS_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets', dataset_name, 'GeneratedVideos')
+
+    # Define paths for YOLO dataset and model data
     YML_DATA_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Configs', 'models_id.yml')
     YOLO_DATASET_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets','YoloDataset')
 
-    if not os.path.exists(YOLO_DATASET_PATH):
-        os.makedirs(YOLO_DATASET_PATH)
-    elif os.path.exists(YOLO_DATASET_PATH):
+    # If YOLO dataset path exists, remove it
+    if os.path.exists(YOLO_DATASET_PATH):
         shutil.rmtree(YOLO_DATASET_PATH)
-        os.makedirs(YOLO_DATASET_PATH)
 
-    # copiare GENERATED_SCENES_PATH in GENERATED_VIDEO_PATH    
-    extract_data(GENERATED_SCENES_PATH, GENERATED_VIDEOS_PATH) # extract all the files from the video folders
+    start_time = time()
 
+    # Extract data from GENERATED_SCENES_PATH to YOLO_DATASET_PATH
+    extract_data(GENERATED_SCENES_PATH, YOLO_DATASET_PATH) # extract all the files from the video folders
+
+    delta_time = time() - start_time
+    print(f'\nFiles copied and extracted in {int(delta_time)}s') 
+
+    # Load model data from YML file
     with open(YML_DATA_PATH, 'r') as file:
         data = yaml.safe_load(file)
 
-    to_yolo(GENERATED_SCENES_PATH, data) # create a new box.txt file in yolo format
+    start_time = time()
 
-    create_yolo_dataset(GENERATED_SCENES_PATH, YOLO_DATASET_PATH, GENERATED_VIDEOS_PATH) # move the images and the box labels to a new folder for the YOLO dataset
+    # Convert extracted data to YOLO format
+    to_yolo(YOLO_DATASET_PATH, data)
 
-    organize_yolo_dataset(YOLO_DATASET_PATH) # organize the YOLO dataset in train and val folders
+    delta_time = time() - start_time
+    print(f'\nBounding boxes refactored in {int(delta_time)}s') 
 
-        
+    start_time = time()
+
+    # Organize YOLO dataset into train and val folders
+    organize_yolo_dataset(YOLO_DATASET_PATH)     
+
+    delta_time = time() - start_time
+    print(f'\nFile organized in training and validation set in {int(delta_time)}s') 

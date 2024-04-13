@@ -4,10 +4,9 @@ import yaml
 
 def move_files(src_dir, dest_dir):
     for filename in os.listdir(src_dir):
-        if '-box-2d-yolo' in filename:
-            new_filename = filename.replace('-box-2d-yolo', '')
-            os.rename(os.path.join(src_dir, filename), os.path.join(src_dir, new_filename))
-            shutil.copy(os.path.join(src_dir, new_filename), dest_dir)
+        if filename.endswith('.txt'):
+            os.rename(os.path.join(src_dir, filename), os.path.join(src_dir, filename))
+            shutil.copy(os.path.join(src_dir, filename), dest_dir)
         else:
             shutil.copy(os.path.join(src_dir, filename), dest_dir)
 
@@ -47,6 +46,7 @@ def create_txt_list(yolo_dataset_path, yolo_dataset_path_test, yolo_dataset_path
 
 
 if __name__ == '__main__':
+
     CURRENT_DIR_PATH = os.path.dirname(__file__)
     CONFIG_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Configs', 'scene_generation.yml')
 

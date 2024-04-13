@@ -3,7 +3,7 @@ import os
 
 # this file generates the syhtetic scenes, the bounding boxes and creates the dataset in YOLO format 
 
-files_to_run = ['generate_scenes.py', 'generate_bboxes.py', 'yolo_conversion.py']
+files_to_run = ['generate_scenes.py', 'generate_bboxes.py', 'yolo_conversion.py', 'conversion_yoloTOyolo.py']
 current_dir = os.path.dirname(__file__)
 
 for file in files_to_run:
