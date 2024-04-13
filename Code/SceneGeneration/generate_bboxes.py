@@ -420,7 +420,7 @@ def process_folder(folder_name:str) -> None:
 
 
             (x1, y1, x2, y2) = (bbox_2d[0][0], bbox_2d[0][1], bbox_2d[2][0], bbox_2d[2][1])
-            if is_box_inside((x1, y1, x2, y2), config_file['camera_settings']['width'],  config_file['camera_settings']['height'], 20):
+            if True or is_box_inside((x1, y1, x2, y2), config_file['camera_settings']['width'],  config_file['camera_settings']['height'], 20): # TODO: bbox threshold removed
                 bboxes_2d[model_name].append(bbox_2d)
                 bboxes_3d[model_name].append(bbox_3d)
                 bboxes_3d_proj[model_name].append(projected_bbox_3d_vertices)

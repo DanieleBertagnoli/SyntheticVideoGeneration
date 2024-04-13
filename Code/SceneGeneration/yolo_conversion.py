@@ -3,6 +3,7 @@ import yaml
 import shutil
 import random
 from time import time
+from tqdm import tqdm
 
 def clamp(value: float, min_value: float, max_value: float) -> float:
     """
@@ -22,6 +23,13 @@ def clamp(value: float, min_value: float, max_value: float) -> float:
 
 
 
+def copy_with_progress(src, dst):
+    """Copy a single file from src to dst and update the progress bar."""
+    shutil.copy2(src, dst)
+    pbar.update(1)  # Update the progress bar by one step
+
+
+
 def extract_data(generated_scenes_path: str, yolo_dataset_path: str) -> None:
     """
     Extracts data from generated scenes to a YOLO dataset directory.
@@ -34,8 +42,18 @@ def extract_data(generated_scenes_path: str, yolo_dataset_path: str) -> None:
         None
     """
 
-    print(f'Copying {generated_scenes_path} into {yolo_dataset_path}')
-    shutil.copytree(generated_scenes_path, yolo_dataset_path)
+    # Count the number of files in the source directory
+    num_files = sum(len(files) for _, _, files in os.walk(generated_scenes_path))
+
+    # Create a global progress bar
+    global pbar
+    pbar = tqdm(total=num_files, desc="Copying files")
+    
+    # Use shutil.copytree with the custom copy function
+    shutil.copytree(generated_scenes_path, yolo_dataset_path, copy_function=copy_with_progress)
+    
+    # Close the progress bar
+    pbar.close()
 
     print('Extracting files...')    
     
