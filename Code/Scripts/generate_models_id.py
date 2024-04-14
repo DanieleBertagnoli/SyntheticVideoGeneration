@@ -37,7 +37,7 @@ def generate_yaml(dataset_name):
     # Generate the YAML dictionary
     yaml_data = {}
     for i, model_file in enumerate(model_files):
-        yaml_data[model_file] = i+1
+        yaml_data[model_file] = i
 
     try:
         # Output the YAML data to a file
