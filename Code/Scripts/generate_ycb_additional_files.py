@@ -1,8 +1,35 @@
 import os
 import yaml
-import argparse
+import open3d as o3d
 import sys
+import numpy as np
 import trimesh
+import json
+
+
+def create_model_info(file_path):
+    mesh = o3d.io.read_triangle_mesh(file_path)
+    if not mesh.has_vertex_normals():
+        mesh.compute_vertex_normals()
+    
+    vertices = np.asarray(mesh.vertices)
+    diameter = np.linalg.norm(np.max(vertices, axis=0) - np.min(vertices, axis=0))
+    min_x, min_y, min_z = np.min(vertices, axis=0)
+    max_x, max_y, max_z = np.max(vertices, axis=0)
+    com = np.mean(vertices, axis=0)
+    
+    return {
+        "diameter": diameter,
+        "min_x": min_x,
+        "min_y": min_y,
+        "min_z": min_z,
+        "max_x": max_x,
+        "max_y": max_y,
+        "max_z": max_z,
+        "com": com.tolist(),
+        "number_of_points": len(vertices)
+    }
+
 
 def generate(dataset_name:str) -> None:
 
@@ -31,6 +58,7 @@ def generate(dataset_name:str) -> None:
     print(f'\n\n --- classes.txt created for {dataset_name} ---\n\n')
 
     model_folders = os.listdir(os.path.join(dataset_path, 'Models'))
+    models_info = {}
     for model_folder in model_folders:
         model_folder = os.path.join(dataset_path, 'Models', model_folder)
 
@@ -46,9 +74,19 @@ def generate(dataset_name:str) -> None:
 
         print(f'\n\n --- points.xyz created for {model_name} model ---\n\n')
 
+        model_name = model_name.replace('.obj', '.ply')
+        model_path = os.path.join(model_folder, model_name)
+
+        print(f'Creating model info for {model_name}')
+        models_info[model_name[:-4]] = create_model_info(model_path)
+
+    output_path = os.path.join(dataset_path, 'models_info.json')
+    with open(output_path, 'w') as f:
+        json.dump(models_info, f, indent=4)
+
     file_list_path = os.path.join(dataset_path, 'file_list.txt')
     if os.path.exists(file_list_path):
-        os.remove(classes_file)
+        os.remove(file_list_path)
 
     files = ''
     generated_scenes_path = os.path.join(dataset_path, 'GeneratedScenes')
