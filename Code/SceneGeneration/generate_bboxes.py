@@ -251,6 +251,7 @@ def generated_bboxes(model_paths: list,
                     img_height: int,
                     bbox_adjustment_2d: float,
                     bbox_adjustment_3d: float,
+                    generate_3d_bbox: bool,
                     show_image: bool = False) -> tuple:
     """
     Generates 2D and 3D bounding boxes for a given model and image.
@@ -266,6 +267,7 @@ def generated_bboxes(model_paths: list,
         img_height (int): Height of the image in pixels.
         bbox_adjustment_2d (float): Percentage adjustment to scale the 2D bounding box.
         bbox_adjustment_3d (float): Percentage adjustment to scale the 3D bounding box.
+        generate_3d_bbox (bool): Whether the 3D bboxes must be generated or not
         show_image (bool, optional): Whether to display the image with bounding boxes. Defaults to False.
 
     Returns:
@@ -283,8 +285,11 @@ def generated_bboxes(model_paths: list,
 
     # Get the bbox
     bbox_2d, model_projected_vertices = get_bbox_2d(model_path, poses, blendercam_in_world, intrinsic_matrix, img_width, img_height, bbox_adjustment_2d)
-    bbox_3d, projected_bbox_3d_vertices = get_bbox_3d(model_path, poses, blendercam_in_world, intrinsic_matrix, img_width, img_height, bbox_adjustment_3d)
-    
+    if generate_3d_bbox:
+        bbox_3d, projected_bbox_3d_vertices = get_bbox_3d(model_path, poses, blendercam_in_world, intrinsic_matrix, img_width, img_height, bbox_adjustment_3d)
+    else:
+        bbox_3d, projected_bbox_3d_vertices = None, None
+
     if show_image:
 
         # Read the input image
@@ -416,6 +421,7 @@ def process_folder(folder_name:str) -> None:
                                     config_file['camera_settings']['height'],
                                     config_file['bbox_adjustment_2d'],
                                     config_file['bbox_adjustment_3d'],
+                                    config_file['generate_3d_bbox'],
                                     False) # If you want to display them, remember to use one and only one process
 
 
@@ -436,21 +442,23 @@ def process_folder(folder_name:str) -> None:
                     bbox_coords = f'{model_instance[0][0]} {model_instance[0][1]} {model_instance[2][0]} {model_instance[2][1]}'
                     f.write(f"{model[:-4]} {bbox_coords}\n")
 
-        with open(os.path.join(folder_name_path, f'{scene_id}-box-3d.txt'), 'w') as f:
-            for model in bboxes_3d:
-                for model_instance in bboxes_3d[model]:
-                    bbox_coords = ''
-                    for c in model_instance:
-                        bbox_coords += f'{c} '
-                    f.write(f"{model[:-4]} {bbox_coords}\n")
+        if config_file['generate_3d_bbox']:
 
-        with open(os.path.join(folder_name_path, f'{scene_id}-box-3d-proj.txt'), 'w') as f:
-            for model in bboxes_3d:
-                for model_instance in bboxes_3d_proj[model]:
-                    bbox_coords = ''
-                    for c in model_instance:
-                        bbox_coords += f'[{c[0]} {c[1]}] '
-                    f.write(f"{model[:-4]} {bbox_coords}\n")
+            with open(os.path.join(folder_name_path, f'{scene_id}-box-3d.txt'), 'w') as f:
+                for model in bboxes_3d:
+                    for model_instance in bboxes_3d[model]:
+                        bbox_coords = ''
+                        for c in model_instance:
+                            bbox_coords += f'{c} '
+                        f.write(f"{model[:-4]} {bbox_coords}\n")
+
+            with open(os.path.join(folder_name_path, f'{scene_id}-box-3d-proj.txt'), 'w') as f:
+                for model in bboxes_3d:
+                    for model_instance in bboxes_3d_proj[model]:
+                        bbox_coords = ''
+                        for c in model_instance:
+                            bbox_coords += f'[{c[0]} {c[1]}] '
+                        f.write(f"{model[:-4]} {bbox_coords}\n")
             
             
         data_dict = {
@@ -494,7 +502,9 @@ if __name__ == '__main__':
     folder_list = os.listdir(GENERATED_SCENES_PATH)
     folder_list.sort()
 
+    num_threads = int(config_file['num_threads'])
+
     # Use ThreadPoolExecutor to process each folder in parallel
-    with ThreadPoolExecutor(max_workers=5) as executor:
+    with ThreadPoolExecutor(max_workers=num_threads) as executor:
         # Map the process_folder function to each folder in the folder_list
         results = list(executor.map(process_folder, folder_list))
