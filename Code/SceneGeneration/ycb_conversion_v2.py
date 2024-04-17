@@ -3,6 +3,7 @@ import shutil
 from time import time
 import random
 import json
+import cv2
 
 import yaml
 from tqdm import tqdm
@@ -230,6 +231,74 @@ def generate(source_dataset:str, destination_dataset:str, img_width:int, img_hei
     delta_time = time() - start_time
     print(f'File organized in {int(delta_time)} s')
 
+def apply_motion_blur(image, kernel_size=15):
+    # Generate a motion blur kernel
+    kernel_motion_blur = np.zeros((kernel_size, kernel_size))
+    kernel_motion_blur[int((kernel_size-1)/2), :] = np.ones(kernel_size)
+    kernel_motion_blur = kernel_motion_blur / kernel_size
+
+    # Apply the kernel to the image
+    output = cv2.filter2D(image, -1, kernel_motion_blur)
+    return output
+
+def apply_salt_and_pepper(image, salt_prob=0.01, pepper_prob=0.01):
+    # Add salt and pepper noise to the image
+    noisy = np.copy(image)
+    num_salt = np.ceil(salt_prob * image.size)
+    num_pepper = np.ceil(pepper_prob * image.size)
+
+    # Add Salt noise
+    coords = [np.random.randint(0, i - 1, int(num_salt))
+              for i in image.shape]
+    noisy[coords[0], coords[1], :] = 1
+
+    # Add Pepper noise
+    coords = [np.random.randint(0, i - 1, int(num_pepper))
+              for i in image.shape]
+    noisy[coords[0], coords[1], :] = 0
+
+    return noisy
+
+
+def modify_image(dir_path):
+    '''
+    dir_pat: str
+        The path to the directory containing the images and file annotations (multiple annotaions in ycb dataset)
+    dataset: str
+        The dataset to augment
+    '''
+
+    for dir in os.listdir(dir_path): # test, train_syt
+        if os.path.isdir(os.path.join(dir_path, dir)):
+            full_path_dir = os.path.join(dir_path, dir)
+            for dir_scene in os.listdir(full_path_dir): # id scenes
+                full_path_scene = os.path.join(full_path_dir, dir_scene, 'rgb')
+                for file_name in os.listdir(full_path_scene): # images
+                    full_path_file = os.path.join(full_path_scene, file_name)
+                    if os.path.isfile(full_path_file):
+                        # Read the image
+                        image = cv2.imread(full_path_file)
+                        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+                        rn = random.randint(1, 4)
+
+                        if rn == 1:
+                            motion_blurred = apply_motion_blur(image)
+                            cv2.imwrite(full_path_file, cv2.cvtColor(motion_blurred, cv2.COLOR_RGB2BGR))
+                        
+                        elif rn == 2:
+                            salt_pepper = apply_salt_and_pepper(image)
+                            cv2.imwrite(full_path_file, cv2.cvtColor(salt_pepper, cv2.COLOR_RGB2BGR))
+
+                        elif rn == 3:
+                            both_effects = apply_salt_and_pepper(apply_motion_blur(image))
+                            cv2.imwrite(full_path_file, cv2.cvtColor(both_effects, cv2.COLOR_RGB2BGR))
+                        
+                        else:
+                            pass
+
+    return "Succesfully modified the dataset!"
+
 if __name__ == '__main__':
 
 
@@ -247,3 +316,7 @@ if __name__ == '__main__':
     GENERATED_SCENES_BOP_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets', dataset_name, 'GeneratedScenesBop')
 
     generate(GENERATED_SCENES_PATH, GENERATED_SCENES_BOP_PATH, config_file['camera_settings']['width'], config_file['camera_settings']['height'])
+
+    modify_image(GENERATED_SCENES_BOP_PATH)
+
+    

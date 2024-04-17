@@ -248,7 +248,7 @@ def apply_salt_and_pepper(image, salt_prob=0.01, pepper_prob=0.01):
     return noisy
 
 
-def augment(dir_path):
+def modify_image(dir_path):
     '''
     dir_pat: str
         The path to the directory containing the images and file annotations (multiple annotaions in ycb dataset)
@@ -256,14 +256,12 @@ def augment(dir_path):
         The dataset to augment
     '''
 
-    # mb: motion blur, sp: salt and pepper, be: both effects
 
-    images_path = [(os.path.splitext(filename)[0]).split("-")[0] for filename in os.listdir(dir_path) if filename.endswith('.png')]
-
+    
     # iterate the file in dir_path
     for file_name in os.listdir(dir_path):
 
-        if file_name.endswith('png') and "mb" not in file_name and "sp" not in file_name and "be" not in file_name:
+        if file_name.endswith('png'):
             full_path = os.path.join(dir_path, file_name)
             if os.path.isfile(full_path):
                 # Read the image
@@ -271,56 +269,25 @@ def augment(dir_path):
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
                 id_img = (os.path.splitext(file_name)[0]).split("-")[0] + '-' + (os.path.splitext(file_name)[0]).split("-")[1]
-                #print(id_img)
 
-                rn = np.random.rand()
-                if rn > 0.5:
+                rn = random.randint(1, 4)
+
+                if rn == 1:
                     motion_blurred = apply_motion_blur(image)
-                    full_path = os.path.join(dir_path, file_name.split(".")[0] + "-mb.png")
                     cv2.imwrite(full_path, cv2.cvtColor(motion_blurred, cv2.COLOR_RGB2BGR))
-                    for fn in os.listdir(dir_path):
-                        if not fn.endswith('png') and "mb" not in fn and "sp" not in fn and "be" not in fn:
-                            fp = os.path.join(dir_path, fn)
-                            if os.path.isfile(fp):
-                                if id_img in fn:
-                                    shutil.copy(fp, os.path.join(dir_path, fn.split(".")[0] + "-mb." + fn.split(".")[1]))
-
-                rn = np.random.rand()
-                if rn > 0.5:
+                
+                elif rn == 2:
                     salt_pepper = apply_salt_and_pepper(image)
-                    full_path = os.path.join(dir_path, file_name.split(".")[0] + "-sp.png")
                     cv2.imwrite(full_path, cv2.cvtColor(salt_pepper, cv2.COLOR_RGB2BGR))
-                    for fn in os.listdir(dir_path):
-                        if not fn.endswith('png') and "mb" not in fn and "sp" not in fn and "be" not in fn:
-                            fp = os.path.join(dir_path, fn)
-                            if os.path.isfile(fp):
-                                if id_img in fn:
-                                    shutil.copy(fp, os.path.join(dir_path, fn.split(".")[0] + "-sp." + fn.split(".")[1]))
 
-                rn = np.random.rand()
-                if rn > 0.5:
+                elif rn == 3:
                     both_effects = apply_salt_and_pepper(apply_motion_blur(image))
-                    full_path = os.path.join(dir_path, file_name.split(".")[0] + "-be.png")
                     cv2.imwrite(full_path, cv2.cvtColor(both_effects, cv2.COLOR_RGB2BGR))
-                    for fn in os.listdir(dir_path):
-                        if not fn.endswith('png') and "mb" not in fn and "sp" not in fn and "be" not in fn:
-                            fp = os.path.join(dir_path, fn)
-                            if os.path.isfile(fp):
-                                if id_img in fn:
-                                    shutil.copy(fp, os.path.join(dir_path, fn.split(".")[0] + "-be." + fn.split(".")[1]))
-
                 
-                if np.random.rand() > 0.5:
-                    pass
                 else:
-                    for fn in os.listdir(dir_path):
-                        fp = os.path.join(dir_path, fn)
-                        if os.path.isfile(fp):
-                            if id_img in fn and "mb" not in fn and "sp" not in fn and "be" not in fn:
-                                os.remove(fp)
-                
+                    pass
 
-    return "Succesfully augmented the dataset!"
+    return "Succesfully modified the dataset!"
 
 
 
@@ -352,7 +319,7 @@ if __name__ == '__main__':
     # Extract data from GENERATED_SCENES_PATH to YOLO_DATASET_PATH
     extract_data(GENERATED_SCENES_PATH, YOLO_DATASET_PATH) # extract all the files from the video folders
 
-    augment(YOLO_DATASET_PATH)
+    modify_image(YOLO_DATASET_PATH)
     
     delta_time = time() - start_time
     print(f'\nFiles copied and extracted in {int(delta_time)}s') 
