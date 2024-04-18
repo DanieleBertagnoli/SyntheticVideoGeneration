@@ -6,6 +6,7 @@ The project has been tested on both Linux (Ubuntu 22.04) and Windows.
 ## Future Roadmap 🔜
 - [ ] Check why multithreading in `generate_bboxes.py` is slower than running a single thread. 
 - [ ] Fix `visualize_video.py` that doesn't work with boxes that are outside of the image. 
+- [ ] Fix YoloDatasetV2 training and testing folders.
 
 ## Installation 🚀
 We recomend the use of Anaconda (or Miniconda) to run the project since we used Python 3.10.
