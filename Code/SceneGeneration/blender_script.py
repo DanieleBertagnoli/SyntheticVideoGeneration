@@ -745,7 +745,7 @@ def generate(num_scenes:int) -> None:
         os.makedirs(os.path.join(OUTPUT_DIRECTORY, '{:04d}'.format(i)))
 
         # Pick a random number of elements from 1 to the length of object_model_files
-        num_elements = np.random.randint(1, len(object_model_files) + 1)
+        num_elements = np.random.randint(3, len(object_model_files) + 1)
             
         # Randomly select num_elements from object_model_files
         random_models = np.random.choice(object_model_files, num_elements, replace=False)
