@@ -1,8 +1,9 @@
 # SyntheticVideoGeneration
+
 This project has been inspired by the synthetic frame generation process provided by the [iros20-6d-pose-tracking](https://github.com/wenbowen123/iros20-6d-pose-tracking) project. This repository allows you to generate synthetic videos from your CAD models. For each frame in each video sequence, will be generated also a `meta.npy` containing additional informations, such as ground-truth 6DoF of each object in the frame, bounding boxes of those objects and much other information specified in the dedicated section. file The models are dynamically loaded into a Blender scene, and through a keyframe generation process, the camera moves along spherical points smoothly to create the final video. The whole project is designed to work with YCB-Video datasets like, follow the installation steps below to use it. We also provide scripts for creating YOLO-compatible datasets.
 
 <p align="center">
-    <img src="./Images/image.png"  width="" height="300">
+    <img src="./Images/logo.png"  width="" height="200">
 </p>
 
 The project has been tested on both Linux (Ubuntu 22.04) and Windows.
