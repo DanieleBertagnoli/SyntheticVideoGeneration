@@ -1,7 +1,7 @@
 dataset_name: 'ThalesDataset'
 
-
-blender_files: # List of Blender files to be used for scene generation and the number of scenes to be generated for each of those
+# List of Blender files to be used for scene generation and the number of scenes to be generated for each of those
+blender_files: 
     '1.blend': 0
     '2.blend': 0
 
