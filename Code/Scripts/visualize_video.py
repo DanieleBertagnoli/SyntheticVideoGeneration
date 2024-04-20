@@ -50,6 +50,8 @@ def draw_bboxes_2d(img, filename: str, models_id:dict):
 
     return img
 
+
+
 def draw_bboxes_3d(image, filename:str):
     # Points are expected in the order:
     # 0-3: Bottom square in clockwise order starting from the top left corner
@@ -100,6 +102,7 @@ def draw_bboxes_3d(image, filename:str):
     return image
     
 
+
 def draw_axes(img, center, rot, scale=50):
     # Define unit vectors for axes in 3D
     axes = np.array([[scale, 0, 0], [0, scale, 0], [0, 0, scale]])
@@ -146,6 +149,7 @@ def generate_video_from_frames(input_dir:str, output_dir:str, id_scene:int, mode
 
     cv2.destroyAllWindows()
     video.release()
+
 
 
 if __name__ == '__main__':
