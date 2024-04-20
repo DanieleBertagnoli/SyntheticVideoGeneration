@@ -313,6 +313,7 @@ def generated_bboxes(model_paths: list,
     return bbox_2d, bbox_3d, projected_bbox_3d_vertices
 
 
+
 def is_box_inside(bbox: tuple, img_width: int, img_height: int, threshold_percentage: float) -> bool:
     """
     Check if a bounding box is mostly inside an image based on a given threshold percentage.
@@ -354,9 +355,6 @@ def is_box_inside(bbox: tuple, img_width: int, img_height: int, threshold_percen
 
     # Check if the inside percentage meets or exceeds the threshold
     return inside_percentage >= threshold_percentage
-
-
-
 
 
 

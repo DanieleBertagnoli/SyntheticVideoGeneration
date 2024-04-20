@@ -1,14 +1,20 @@
 import cv2
 import os
 import yaml
+import numpy as np
 
-def draw_bboxes_2d(img, filename: str):
+
+def draw_bboxes_2d(img, filename: str, models_id:dict):
 
     # Construct the path to the bounding box file
     bbox_file = filename.replace('-color.png', '-box-2d.txt')
 
+    meta_filename = filename.replace('-color.png', '-meta.npy')
+    metadata = np.load(meta_filename, allow_pickle=True).item()
+
     # Read bounding box coordinates from the file
     with open(bbox_file, 'r') as f:
+
         lines = f.readlines()
         for line in lines:
             # Split the line into individual components
@@ -29,6 +35,19 @@ def draw_bboxes_2d(img, filename: str):
             # Put model name as label
             cv2.putText(img, model_name, (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
     
+            cx = (x_max + x_min)//2
+            cy = (y_max + y_min)//2
+
+            cls_index = list(metadata['cls_indexes']).index(models_id[model_name])
+            abs_pose = metadata['poses'][cls_index]
+            blendercam = metadata['blendercam_in_world']
+
+            inv_blendercam = np.linalg.inv(blendercam)
+            cam_pose = np.dot(inv_blendercam, abs_pose)
+
+            R = cam_pose[0:3, 0:3]
+            draw_axes(img, (cx, cy), R)  # Assuming draw_axes is defined elsewhere
+
     return img
 
 def draw_bboxes_3d(image, filename:str):
@@ -79,9 +98,27 @@ def draw_bboxes_3d(image, filename:str):
                 image = cv2.line(image, bottom_point, top_point, (0, 0, 255), 2)
 
     return image
+    
+
+def draw_axes(img, center, rot, scale=50):
+    # Define unit vectors for axes in 3D
+    axes = np.array([[scale, 0, 0], [0, scale, 0], [0, 0, scale]])
+    point_center = np.array([center[0], center[1], 0])  # Add a dummy zero for the 3D center
+
+    # Colors for the axes: Red for X, Green for Y, Blue for Z
+    colors = [(0, 0, 255), (0, 255, 0), (255, 0, 0)]
+
+    # Transform axes using the rotation matrix
+    transformed_axes = rot.dot(axes.T).T
+
+    for i, color in enumerate(colors):
+        # Calculate the end point of each axis in 3D, then drop the z-component to project it to 2D
+        axis_end = point_center + transformed_axes[i]
+        cv2.line(img, tuple(point_center[:2].astype(int)), tuple(axis_end[:2].astype(int)), color, 2)
 
 
-def generate_video_from_frames(input_dir:str, output_dir:str, id_scene:int, fps=24, draw_boxes_2d=False, draw_bboxes_3d=False) -> None:
+
+def generate_video_from_frames(input_dir:str, output_dir:str, id_scene:int, models_id:dict, fps=24, draw_boxes_2d=False, draw_boxes_3d=False) -> None:
     
     output_video_path = os.path.join(output_dir, f'{id_scene}.mp4')
 
@@ -100,9 +137,9 @@ def generate_video_from_frames(input_dir:str, output_dir:str, id_scene:int, fps=
 
         img = cv2.imread(os.path.join(input_dir, filename))
         if draw_boxes_2d:
-            img = draw_bboxes_2d(img, os.path.join(input_dir, filename))
+            img = draw_bboxes_2d(img, os.path.join(input_dir, filename), models_id)
 
-        if draw_bboxes_3d:    
+        if draw_boxes_3d:    
             img = draw_bboxes_3d(img, os.path.join(input_dir, filename))
 
         video.write(img)
@@ -124,6 +161,14 @@ if __name__ == '__main__':
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
 
+    models_id_path = os.path.join(DATA_PATH, 'Configs', 'models_id.yml')
+    with open(models_id_path, 'r') as f:
+        tmp = yaml.safe_load(f)
+
+    models_id = {}
+    for k, v in tmp.items():
+        models_id[k.split('.')[0]] = v
+
     for id_scene in sorted(os.listdir(input_directory)):
 
         print(f'\n\n--- Generating video for {id_scene} scene ---\n\n')
@@ -131,4 +176,4 @@ if __name__ == '__main__':
         if not os.path.isdir(os.path.join(input_directory, id_scene)):
             continue
         
-        generate_video_from_frames(input_directory, output_directory, id_scene, config_file['fps'], True, False)
+        generate_video_from_frames(input_directory, output_directory, id_scene, models_id, config_file['fps'], True, False)

@@ -2,7 +2,7 @@ dataset_name: 'ThalesDataset'
 
 # List of Blender files to be used for scene generation and the number of scenes to be generated for each of those
 blender_files: 
-    '1.blend': 0
+    '1.blend': 1
     '2.blend': 0
 
 fps: 24  # Frames per second for animation
