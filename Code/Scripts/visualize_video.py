@@ -19,7 +19,7 @@ def draw_bboxes_2d(img, filename: str):
             
             # Extract bounding box coordinates
             model_name, x_min, y_min, x_max, y_max = components
-            
+
             # Convert coordinates to integers
             x_min, y_min, x_max, y_max = map(int, [x_min, y_min, x_max, y_max])
             
@@ -81,7 +81,7 @@ def draw_bboxes_3d(image, filename:str):
     return image
 
 
-def generate_video_from_frames(input_dir:str, output_dir:str, id_scene:int, fps=24, draw_boxes_2d=False, draw_boxes_3d=False) -> None:
+def generate_video_from_frames(input_dir:str, output_dir:str, id_scene:int, fps=24, draw_boxes_2d=False, draw_bboxes_3d=False) -> None:
     
     output_video_path = os.path.join(output_dir, f'{id_scene}.mp4')
 
@@ -131,4 +131,4 @@ if __name__ == '__main__':
         if not os.path.isdir(os.path.join(input_directory, id_scene)):
             continue
         
-        generate_video_from_frames(input_directory, output_directory, id_scene, config_file['fps'], False, True)
+        generate_video_from_frames(input_directory, output_directory, id_scene, config_file['fps'], True, False)

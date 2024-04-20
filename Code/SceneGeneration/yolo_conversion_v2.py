@@ -37,10 +37,10 @@ def new_yolo(src_dir, dest_dir):
 
 def create_txt_list(yolo_dataset_path, yolo_dataset_path_test, yolo_dataset_path_train):
     # create train.txt file in yolo_dataset_path
-    with open(os.path.join(yolo_dataset_path, 'train.txt'), 'w') as f:
+    with open(os.path.join(yolo_dataset_path, 'train', 'train.txt'), 'w') as f:
         for filename in os.listdir(yolo_dataset_path_train):
             f.write("./images/" + filename + "\n")
-    with open(os.path.join(yolo_dataset_path, 'val.txt'), 'w') as f:
+    with open(os.path.join(yolo_dataset_path, 'test', 'val.txt'), 'w') as f:
         for filename in os.listdir(yolo_dataset_path_test):
             f.write("./images/" + filename + "\n")
 
