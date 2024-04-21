@@ -104,7 +104,37 @@ or by running manually the following scripts (NB: Steps 4 and 5 are not run by `
 python Code/SceneGeneration/generate_scenes.py
 ```
 
-This script will generate a new directory `Data/Datasets/MyDataset/GeneratedScenes/`. Then for each blender file specified in `scene_generation.yml`, the script will generated a number of scenes (video sequences) based on the number specified in the same config file as well. Each video sequence is identified by a 4 digit number (starting from 0000/). The script will generate 4 files for each frame:
+This script will generate a new directory `Data/Datasets/MyDataset/GeneratedScenes/`. Then for each blender file specified in `scene_generation.yml`, the script will generated a number of scenes (video sequences) based on the number specified in the same config file as well. Each video sequence is identified by a 4 digit number (starting from 0000/), the directory structure will be the following:
+
+```
+📁GeneratedScenes/
+├── 📁 0000/
+│   ├── 📷 000000-color.png
+│   ├── 📷 000000-depth.png
+│   ├── 📷 000000-seg.png
+│   ├── 📄 000000-meta.npy
+│   ├── 📷 000001-color.png
+│   ├── 📷 000001-depth.png
+│   ├── 📷 000001-seg.png
+│   ├── 📄 000001-meta.npy
+│   ├── ...
+│   ├── 📷 xxxxxx-color.png
+│   ├── 📷 xxxxxx-depth.png
+│   ├── 📷 xxxxxx-seg.png
+│   └── 📄 xxxxxx-meta.npy
+|
+├── 📁 0001/
+│   ├── ...
+│   ├── 📷 yyyyyy-color.png
+│   ├── 📷 yyyyyy-depth.png
+│   ├── 📷 yyyyyy-seg.png
+│   └── 📄 yyyyyy-meta.npy
+|
+...
+└── 📁 zzzz/
+```
+
+The script will generate 4 files for each frame:
  - `xxxx-color.png`: RBG Frame.
  - `xxxx-depth.png`: Depth map of the frame.
  - `xxxx-seg.png`: Segmentation map with the all you models segmented.
