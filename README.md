@@ -13,6 +13,7 @@ The project has been tested on both Linux (Ubuntu 22.04) and Windows.
 - [x] Fix `visualize_video.py` that doesn't work with boxes that are outside of the image. 
 - [x] Fix YoloDatasetV2 training and testing folders.
 - [x] Add axis visualization in `visualize_video.py`
+- [x] Remove pose randomization to check the validity of `visualize_video.py`
 
 ## Installation 🚀
 We recomend the use of Anaconda (or Miniconda) to run the project since we used Python 3.10.
