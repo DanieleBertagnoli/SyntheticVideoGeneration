@@ -86,8 +86,8 @@ def generate(source_dataset:str, destination_dataset:str, img_width:int, img_hei
     # Split scene names into train and validation sets
     train_scenes = scenes[:int(len(scenes)*0.8)]
 
-    train_synt_path = os.path.join(destination_dataset, 'train_synt')
-    test_path = os.path.join(destination_dataset, 'test')
+    train_synt_path = os.path.join(destination_dataset, 'train', 'train_synt')
+    test_path = os.path.join(destination_dataset, 'test_all', 'test')
     os.makedirs(train_synt_path, exist_ok=True)
     os.makedirs(test_path, exist_ok=True)
 
@@ -268,7 +268,7 @@ def modify_image(dir_path):
         The dataset to augment
     '''
 
-    for dir in os.listdir(dir_path): # test, train_syt
+    for dir in os.listdir(dir_path):
         if os.path.isdir(os.path.join(dir_path, dir)):
             full_path_dir = os.path.join(dir_path, dir)
             for dir_scene in os.listdir(full_path_dir): # id scenes
@@ -317,6 +317,7 @@ if __name__ == '__main__':
 
     generate(GENERATED_SCENES_PATH, GENERATED_SCENES_BOP_PATH, config_file['camera_settings']['width'], config_file['camera_settings']['height'])
 
-    modify_image(GENERATED_SCENES_BOP_PATH)
+    modify_image(os.path.join(GENERATED_SCENES_BOP_PATH, 'test_all'))
+    modify_image(os.path.join(GENERATED_SCENES_BOP_PATH, 'train'))
 
     
