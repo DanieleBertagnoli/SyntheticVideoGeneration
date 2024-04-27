@@ -494,7 +494,7 @@ if __name__ == '__main__':
         model_folder = os.path.join(OBJECT_MODELS_DIR_PATH, model_folder)
         model_name = [f for f in os.listdir(model_folder) if f.endswith('.obj')][0]
         model_paths.append(os.path.join(model_folder, model_name))
-        meshes[model_name] = trimesh.load_mesh(os.path.join(model_folder, model_name))
+        meshes[model_name] = trimesh.load(os.path.join(model_folder, model_name), force='mesh')
 
     folder_list = os.listdir(GENERATED_SCENES_PATH)
     folder_list.sort()
