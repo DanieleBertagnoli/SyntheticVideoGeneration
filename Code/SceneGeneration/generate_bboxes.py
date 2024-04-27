@@ -2,7 +2,7 @@ import os
 from time import time
 from typing import *
 import threading
-from concurrent.futures import ThreadPoolExecutor
+from multiprocessing import Pool
 
 import numpy as np
 import trimesh
@@ -120,10 +120,10 @@ def get_bbox_2d(model_path: str,
     """
 
     # Load the 3D model of the object
-    mesh = trimesh.load(model_path)
+    model_name = os.path.basename(model_path)
+    transformed_mesh = meshes[model_name].copy()
     
     # Apply the 6D pose of the object relative to the world
-    transformed_mesh = mesh.copy()
     transformed_mesh.apply_transform(poses)
 
     # Project the vertices of the 3D model onto the image
@@ -176,10 +176,10 @@ def get_bbox_3d(model_path: str,
     """
 
     # Load the 3D model of the object
-    mesh = trimesh.load(model_path)
+    model_name = os.path.basename(model_path)
+    transformed_mesh = meshes[model_name].copy()
     
     # Apply the 6D pose of the object relative to the world
-    transformed_mesh = mesh.copy()
     transformed_mesh.apply_transform(poses)
 
     # Compute the oriented bounding box of the transformed mesh
@@ -476,7 +476,6 @@ def process_folder(folder_name:str) -> None:
 
 
 if __name__ == '__main__':
-
     # Define paths
     CURRENT_DIR_PATH = os.path.dirname(__file__)
     CONFIG_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Configs', 'scene_generation.yml')
@@ -485,24 +484,22 @@ if __name__ == '__main__':
         config_file = yaml.safe_load(f)
 
     dataset_name = config_file['dataset_name']
-
     GENERATED_SCENES_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets', dataset_name, 'GeneratedScenes')
-    
     OBJECT_MODELS_DIR_PATH = os.path.join(CURRENT_DIR_PATH, '..', '..', 'Data', 'Datasets', dataset_name, 'Models')
 
     model_folders = os.listdir(OBJECT_MODELS_DIR_PATH)
     model_paths = []
+    meshes = {}
     for model_folder in model_folders:
         model_folder = os.path.join(OBJECT_MODELS_DIR_PATH, model_folder)
         model_name = [f for f in os.listdir(model_folder) if f.endswith('.obj')][0]
         model_paths.append(os.path.join(model_folder, model_name))
+        meshes[model_name] = trimesh.load_mesh(os.path.join(model_folder, model_name))
 
     folder_list = os.listdir(GENERATED_SCENES_PATH)
     folder_list.sort()
+    num_processes = int(config_file['num_threads'])  # Can use num_threads setting to set number of processes
 
-    num_threads = int(config_file['num_threads'])
-
-    # Use ThreadPoolExecutor to process each folder in parallel
-    with ThreadPoolExecutor(max_workers=num_threads) as executor:
-        # Map the process_folder function to each folder in the folder_list
-        results = list(executor.map(process_folder, folder_list))
+    # Use multiprocessing Pool to process each folder in parallel
+    with Pool(processes=num_processes) as pool:
+        results = pool.map(process_folder, folder_list)

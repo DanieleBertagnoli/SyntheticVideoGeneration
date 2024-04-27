@@ -84,7 +84,7 @@ def generate(source_dataset:str, destination_dataset:str, img_width:int, img_hei
     random.shuffle(scenes)
     
     # Split scene names into train and validation sets
-    train_scenes = scenes[:int(len(scenes)*0.8)]
+    train_scenes = scenes[:int(len(scenes)*0.9)]
 
     train_synt_path = os.path.join(destination_dataset, 'train', 'train_synt')
     test_path = os.path.join(destination_dataset, 'test_all', 'test')

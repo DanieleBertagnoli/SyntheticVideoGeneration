@@ -2,8 +2,8 @@ dataset_name: 'ThalesDataset'
 
 # List of Blender files to be used for scene generation and the number of scenes to be generated for each of those
 blender_files: 
-    '1.blend': 5
-    '2.blend': 5
+    '1.blend': 20
+    '2.blend': 20
 
 fps: 24  # Frames per second for animation
 cam_movements_per_scene: [3, 8]  # Range of camera movements per scene (min, max)
@@ -32,6 +32,6 @@ camera_settings:  # Intrinsic camera parameters
 
 
 generate_3d_bbox: false
-num_threads: 1
+num_threads: 2
 bbox_adjustment_2d: 3  # Adjustment value for bounding box (in %)
 bbox_adjustment_3d: 5  # Adjustment value for bounding box (in %)

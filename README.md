@@ -9,7 +9,7 @@ This project has been inspired by the synthetic frame generation process provide
 The project has been tested on both Linux (Ubuntu 22.04) and Windows.
 
 ## Future Roadmap 🔜
-- [ ] Check why multithreading in `generate_bboxes.py` is slower than running a single thread. 
+- [x] Check why multithreading in `generate_bboxes.py` is slower than running a single thread. 
 - [x] Fix `visualize_video.py` that doesn't work with boxes that are outside of the image. 
 - [x] Fix YoloDatasetV2 training and testing folders.
 - [x] Add axis visualization in `visualize_video.py`
