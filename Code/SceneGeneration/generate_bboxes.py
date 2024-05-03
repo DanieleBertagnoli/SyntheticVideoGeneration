@@ -10,6 +10,7 @@ import trimesh.transformations as tf
 import cv2
 import yaml
 
+from functools import partial
 
 
 def get_model_name_from_id(id) -> str:
@@ -94,7 +95,7 @@ def project_points(points_3d: np.ndarray, blendercam_in_world: np.ndarray, intri
 
 
 
-def get_bbox_2d(model_path: str,
+def get_bbox_2d(meshes, model_path: str,
                 poses: np.ndarray,
                 blendercam_in_world: np.ndarray,
                 intrinsic_matrix: np.ndarray,
@@ -150,7 +151,7 @@ def get_bbox_2d(model_path: str,
 
 
 
-def get_bbox_3d(model_path: str,
+def get_bbox_3d(meshes, model_path: str,
                 poses: np.ndarray,
                 blendercam_in_world: np.ndarray,
                 intrinsic_matrix: np.ndarray,
@@ -241,7 +242,7 @@ def draw_3d_bbox(image: np.ndarray, points: list, color: tuple) -> np.ndarray:
 
 
 
-def generated_bboxes(model_paths: list,
+def generated_bboxes(meshes, model_paths: list,
                     blendercam_in_world: np.ndarray,
                     poses: np.ndarray,
                     image_path: str,
@@ -252,7 +253,8 @@ def generated_bboxes(model_paths: list,
                     bbox_adjustment_2d: float,
                     bbox_adjustment_3d: float,
                     generate_3d_bbox: bool,
-                    show_image: bool = False) -> tuple:
+                    show_image: bool = False,
+                    ) -> tuple:
     """
     Generates 2D and 3D bounding boxes for a given model and image.
 
@@ -284,9 +286,9 @@ def generated_bboxes(model_paths: list,
             break
 
     # Get the bbox
-    bbox_2d, model_projected_vertices = get_bbox_2d(model_path, poses, blendercam_in_world, intrinsic_matrix, img_width, img_height, bbox_adjustment_2d)
+    bbox_2d, model_projected_vertices = get_bbox_2d(meshes, model_path, poses, blendercam_in_world, intrinsic_matrix, img_width, img_height, bbox_adjustment_2d)
     if generate_3d_bbox:
-        bbox_3d, projected_bbox_3d_vertices = get_bbox_3d(model_path, poses, blendercam_in_world, intrinsic_matrix, img_width, img_height, bbox_adjustment_3d)
+        bbox_3d, projected_bbox_3d_vertices = get_bbox_3d(meshes, model_path, poses, blendercam_in_world, intrinsic_matrix, img_width, img_height, bbox_adjustment_3d)
     else:
         bbox_3d, projected_bbox_3d_vertices = None, None
 
@@ -358,7 +360,7 @@ def is_box_inside(bbox: tuple, img_width: int, img_height: int, threshold_percen
 
 
 
-def process_folder(folder_name:str) -> None:
+def process_folder(meshes, config_file, model_paths, GENERATED_SCENES_PATH, folder_name:str) -> None:
     """
     Processes a folder containing scene data by generating bounding boxes for each scene.
 
@@ -409,7 +411,7 @@ def process_folder(folder_name:str) -> None:
             bboxes_3d[model_name] = []
             bboxes_3d_proj[model_name] = []
 
-            bbox_2d, bbox_3d, projected_bbox_3d_vertices = generated_bboxes(model_paths,
+            bbox_2d, bbox_3d, projected_bbox_3d_vertices = generated_bboxes(meshes, model_paths,
                                     metadata['blendercam_in_world'],
                                     metadata['poses'][count_object_id],
                                     os.path.join(folder_name_path, f'{scene_id}-color.png'),
@@ -500,6 +502,9 @@ if __name__ == '__main__':
     folder_list.sort()
     num_processes = int(config_file['num_threads'])  # Can use num_threads setting to set number of processes
 
+    # Define a partial function with GENERATED_SCENES_PATH as a fixed argument
+    process_folder_with_path = partial(process_folder, meshes, config_file, model_paths, GENERATED_SCENES_PATH)
+
     # Use multiprocessing Pool to process each folder in parallel
     with Pool(processes=num_processes) as pool:
-        results = pool.map(process_folder, folder_list)
+        results = pool.map(process_folder_with_path, folder_list)
