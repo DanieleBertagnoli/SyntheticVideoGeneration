@@ -84,20 +84,20 @@ def draw_bboxes_3d(image, filename:str):
             for i in range(len(points_order)):
                 start_point = points[points_order[i]]
                 end_point = points[points_order[(i+1) % len(points_order)]]  # Loop back to the first point
-                image = cv2.line(image, start_point, end_point, (0, 0, 255), 2)
+                image = cv2.line(image, start_point, end_point, (0, 255, 0), 2)
             
             # Draw top square
             points_order = [4,5,7,6]
             for i in range(len(points_order)):
                 start_point = points[points_order[i]]
                 end_point = points[points_order[(i+1) % len(points_order)]]  # Loop back to the first point
-                image = cv2.line(image, start_point, end_point, (0, 0, 255), 2)
+                image = cv2.line(image, start_point, end_point, (0, 255, 0), 2)
 
             # Draw vertical lines (edges)
             for i in range(4):
                 bottom_point = points[i]
                 top_point = points[i+4]
-                image = cv2.line(image, bottom_point, top_point, (0, 0, 255), 2)
+                image = cv2.line(image, bottom_point, top_point, (0, 255, 0), 2)
 
     return image
     

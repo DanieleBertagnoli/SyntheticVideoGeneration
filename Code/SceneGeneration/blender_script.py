@@ -309,32 +309,30 @@ def change_object_texture(ob_name: str, image_dir: str) -> None:
     # Get the material of the object
     mat = ob.data.materials[0]
 
-    # Disable use of nodes for the material
-    mat.use_nodes = False
-    
-    # Load the image texture
+    # Create a new image texture
     img = bpy.data.images.load(image_dir)
-    
-    # Create a new texture
-    tex_name = 'Texture'
-    tex = bpy.data.textures.new(tex_name, 'IMAGE')
+    tex = bpy.data.textures.new(name='Texture', type='IMAGE')
     tex.image = img
 
-    # Get the texture slot of the material
-    slot = mat.texture_slots[0]
+    # Assign the texture to the material
+    if not mat.texture_slots:
+        mat.texture_slots.add()
+    tex_slot = mat.texture_slots[0]
+    tex_slot.texture = tex
 
-    # Assign the texture to the texture slot
-    slot.texture = tex
+    # Set the texture to use UV coordinates and clip the texture
+    tex_slot.texture_coords = 'UV'
+    tex_slot.use_map_color_diffuse = True
+    tex.extension = 'CLIP'
+
+    # Apply UV mapping to the object
+    bpy.context.scene.objects.active = ob
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.uv.unwrap(method='ANGLE_BASED', margin=0.001)
+    bpy.ops.object.mode_set(mode='OBJECT')
 
     # Update the scene
     bpy.context.scene.update()
-
-    # Set texture coordinates to 'OBJECT'
-    ob.active_material.texture_slots[0].texture_coords = 'OBJECT'
-
-    # Set texture scale
-    ob.active_material.texture_slots[0].scale[0] = 4
-    ob.active_material.texture_slots[0].scale[1] = 4
 
 
 
@@ -720,7 +718,7 @@ def generate(num_scenes:int) -> None:
     # Get the abs paths of the object models
     object_models = models_id.keys()
 
-    model_folders = os.listdir(OBJECT_MODELS_DIR_PATH)
+    model_folders = sorted(os.listdir(OBJECT_MODELS_DIR_PATH))
     object_model_files = []
     for model_folder in model_folders:
         model_folder = os.path.join(OBJECT_MODELS_DIR_PATH, model_folder)
@@ -745,7 +743,7 @@ def generate(num_scenes:int) -> None:
         os.makedirs(os.path.join(OUTPUT_DIRECTORY, '{:04d}'.format(i)))
 
         # Pick a random number of elements from 1 to the length of object_model_files
-        num_elements = np.random.randint(3, len(object_model_files) + 1)
+        num_elements = np.random.randint(3, 6)
             
         # Randomly select num_elements from object_model_files
         random_models = np.random.choice(object_model_files, num_elements, replace=False)

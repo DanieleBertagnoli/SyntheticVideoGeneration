@@ -2,18 +2,18 @@ dataset_name: 'ThalesDataset'
 
 # List of Blender files to be used for scene generation and the number of scenes to be generated for each of those
 blender_files: 
-    '1.blend': 0
-    '2.blend': 1
+    '1.blend': 30
+    '2.blend': 150
 
 fps: 24  # Frames per second for animation
-cam_movements_per_scene: [3, 8]  # Range of camera movements per scene (min, max)
-cam_movements_duration_in_seconds: [4, 8]  # Range of duration for camera movements in seconds (min, max)
+cam_movements_per_scene: [7, 8]  # Range of camera movements per scene (min, max)
+cam_movements_duration_in_seconds: [7, 8]  # Range of duration for camera movements in seconds (min, max)
 
 
 blender_settings:  # Blender settings
-    range_x: [-0.3, 0.3]  # Range of x-axis coordinates for object placement
-    range_y: [-0.3, 0.3]  # Range of y-axis coordinates for object placement
-    range_z: [0.4, 0.9]  # Range of z-axis coordinates for object placement
+    range_x: [-0.5, 0.5]  # Range of x-axis coordinates for object placement
+    range_y: [-0.5, 0.5]  # Range of y-axis coordinates for object placement
+    range_z: [0.3, 0.5]  # Range of z-axis coordinates for object placement
     sun_energy: [0.3, 2]  # Range of environmental light intensity
     sun_color: [[0, 0.05], [0, 0.05], [0, 0.05]]  # Range of environmental light color (R, G, B)
     max_lamp_num: 3  # Maximum number of lamps to be added to the scene
