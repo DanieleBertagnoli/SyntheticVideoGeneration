@@ -44,10 +44,10 @@ def compute_bbox_visibility(x_min, y_min, x_max, y_max, img_width, img_height):
     px_count_all = abs(x_max - x_min) * abs(y_max - y_min)
 
     # Adjust the rectangle coordinates to be within the image boundaries
-    x_min_adj = max(x_min, 0)
-    y_min_adj = max(y_min, 0)
-    x_max_adj = min(x_max, img_width)
-    y_max_adj = min(y_max, img_height)
+    x_min_adj = max(min(x_min, img_width), 0)
+    y_min_adj = max(min(y_min, img_height), 0)
+    x_max_adj = max(min(x_max, img_width), 0)
+    y_max_adj = max(min(y_max, img_height), 0)
 
     # Calculate the number of pixels that are visible within the image boundaries
     if x_min_adj < x_max_adj and y_min_adj < y_max_adj:
@@ -171,9 +171,14 @@ def generate(source_dataset:str, destination_dataset:str, img_width:int, img_hei
                         
                         bbox_infos = compute_bbox_visibility(x_min, y_min, x_max, y_max, img_width, img_height)
 
+                        x_min_adj = max(min(x_min, img_width), 0)
+                        y_min_adj = max(min(y_min, img_height), 0)
+                        x_max_adj = max(min(x_max, img_width), 0)
+                        y_max_adj = max(min(y_max, img_height), 0)
+
                         new_dict_obj = {
-                            'bbox_obj': [x_max, y_min, x_min, y_max], 
-                            'bbox_visib': [x_max, y_min, x_min, y_max], 
+                            'bbox_obj': [x_min_adj, y_min_adj, x_max_adj-x_min_adj, y_max_adj-y_min_adj], 
+                            'bbox_visib': [x_min_adj, y_min_adj, x_max_adj, y_max_adj], 
                             'px_count_all': bbox_infos[0], 
                             'px_count_valid': bbox_infos[1], 
                             'px_count_visib': bbox_infos[2],  

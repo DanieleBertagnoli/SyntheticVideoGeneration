@@ -98,6 +98,8 @@ def to_yolo(yolo_dataset_path: str, data: dict, width_img: int = 640, height_img
         None
     """
 
+    object_instances = {}
+
     file_list = os.listdir(yolo_dataset_path)
     for box_txt_file in file_list:
 
@@ -121,6 +123,9 @@ def to_yolo(yolo_dataset_path: str, data: dict, width_img: int = 640, height_img
                 y_min = clamp(y_min, 0, height_img)
                 y_max = clamp(y_max, 0, height_img)
 
+                if x_max <= 0 or x_min >= width_img or y_max <= 0 or y_min >= height_img:
+                    continue
+
                 # Calculate bounding box center and dimensions relative to image size
                 x_centre = ((x_min + x_max) / 2) / width_img
                 y_centre = ((y_max + y_min) / 2) / height_img
@@ -128,7 +133,9 @@ def to_yolo(yolo_dataset_path: str, data: dict, width_img: int = 640, height_img
                 height = (y_max - y_min) / height_img
 
                 # Convert object name to object ID
-                object_id = data.get(object_name + '.obj')
+                object_id = data.get(object_name + '.obj')-1
+                object_instances.setdefault(object_id, 0)
+                object_instances[object_id] += 1            
 
                 # Write new coordinates in YOLO format
                 f_out.write(f"{object_id} {x_centre:.2f} {y_centre:.2f} {width:.2f} {height:.2f}\n")
@@ -140,7 +147,7 @@ def to_yolo(yolo_dataset_path: str, data: dict, width_img: int = 640, height_img
         # Remove the original box_txt_file
         os.remove(box_txt_file)
 
-
+    print(f'Object instances in the dataset: {sorted(object_instances.items())}')
 
 def check_and_create_folder(folder_path: str) -> None:
     """
@@ -319,7 +326,7 @@ if __name__ == '__main__':
     # Extract data from GENERATED_SCENES_PATH to YOLO_DATASET_PATH
     extract_data(GENERATED_SCENES_PATH, YOLO_DATASET_PATH) # extract all the files from the video folders
 
-    modify_image(YOLO_DATASET_PATH)
+    #modify_image(YOLO_DATASET_PATH)
     
     delta_time = time() - start_time
     print(f'\nFiles copied and extracted in {int(delta_time)}s') 
