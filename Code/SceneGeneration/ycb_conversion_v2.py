@@ -322,7 +322,7 @@ if __name__ == '__main__':
 
     generate(GENERATED_SCENES_PATH, GENERATED_SCENES_BOP_PATH, config_file['camera_settings']['width'], config_file['camera_settings']['height'])
 
-    modify_image(os.path.join(GENERATED_SCENES_BOP_PATH, 'test_all'))
-    modify_image(os.path.join(GENERATED_SCENES_BOP_PATH, 'train'))
+    #modify_image(os.path.join(GENERATED_SCENES_BOP_PATH, 'test_all'))
+    #modify_image(os.path.join(GENERATED_SCENES_BOP_PATH, 'train'))
 
     
